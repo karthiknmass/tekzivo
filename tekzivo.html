@@ -1,0 +1,593 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Tekzivo - Mobile Spare Parts & Repair Services</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+    <!-- Top Bar -->
+    <div class="top-bar">
+        <div class="container">
+            <div>
+                <a href="#">Customer Service</a> | 
+                <a href="#">Track Order Status</a> | 
+                <a href="#">Terms & Conditions</a>
+            </div>
+            <div>
+                <a href="#">My Account</a> | 
+                <a href="#">Orders</a> | 
+                <a href="#">Sign in</a>
+            </div>
+        </div>
+    </div>
+
+    <!-- Header -->
+    <header class="header-main">
+        <div class="container">
+            <a href="#" class="logo">Tek<span>zivo</span></a>
+            
+            <div class="search-bar">
+                <input type="text" placeholder="Search for spare parts, repair services, tools..." id="search-input">
+                <button type="button" onclick="searchProducts()">SEARCH</button>
+            </div>
+
+            <div class="header-actions">
+                <a href="#" class="cart-btn" onclick="showToast('Cart functionality available after booking!')">
+                    <span class="cart-icon">🛒</span>
+                    <span>Cart</span>
+                </a>
+            </div>
+        </div>
+    </header>
+
+    <!-- Main Navigation -->
+    <nav class="main-nav">
+        <div class="container">
+            <ul>
+                <li><a href="#" onclick="showCategory('All')">Home</a></li>
+                <li><a href="#" onclick="showCategory('Smartphone')">Smartphones</a></li>
+                <li><a href="#" onclick="showCategory('Laptop')">Laptops</a></li>
+                <li><a href="#" onclick="showCategory('LED TV')">LED TVs</a></li>
+            </ul>
+        </div>
+    </nav>
+
+    <!-- Layout Wrapper -->
+    <div class="container layout-wrapper">
+        
+        <!-- Sidebar -->
+        <aside class="sidebar">
+            <div class="category-menu">
+                <h3>Categories</h3>
+                <ul>
+                    <li><a href="#" onclick="showCategory('Smartphone')">Mobile Repair Services</a></li>
+                    <li><a href="#" onclick="showCategory('Laptop')">Laptop Repair Services</a></li>
+                    <li><a href="#" onclick="showCategory('LED TV')">TV Repair Services</a></li>
+                    <li><a href="#">Spare Parts (Coming Soon)</a></li>
+                    <li><a href="#">Repair Tools (Coming Soon)</a></li>
+                    <li><a href="#">Accessories (Coming Soon)</a></li>
+                </ul>
+            </div>
+            
+        </aside>
+
+        <!-- Main Content -->
+        <main class="main-content">
+            <div class="banner">
+                <h2>Premium Doorstep Repair Service</h2>
+                <p>Expert Technicians. Genuine Parts. Affordable Prices.</p>
+            </div>
+
+            <!-- Dynamic Grids will be injected here -->
+            <div id="product-sections"></div>
+            
+        </main>
+    </div>
+
+    <!-- Footer -->
+    <footer class="footer">
+        <div class="container">
+            <div class="footer-grid">
+                <div>
+                    <h4>My Account</h4>
+                    <ul>
+                        <li><a href="#">Sign in</a></li>
+                        <li><a href="#">Create account</a></li>
+                        <li><a href="#">Orders</a></li>
+                    </ul>
+                </div>
+                <div>
+                    <h4>Tekzivo.com</h4>
+                    <ul>
+                        <li><a href="#">About us</a></li>
+                        <li><a href="#">Contact us</a></li>
+                        <li><a href="#">Career with us</a></li>
+                        <li><a href="#">Sitemap</a></li>
+                    </ul>
+                </div>
+                <div>
+                    <h4>Customer Service</h4>
+                    <ul>
+                        <li><a href="#">Contact Support</a></li>
+                        <li><a href="#">Track Order Status</a></li>
+                        <li><a href="#">Terms & Conditions</a></li>
+                        <li><a href="#">Warranty T&C</a></li>
+                    </ul>
+                </div>
+                <div>
+                    <h4>Stay Connected</h4>
+                    <p>Follow us on social media for updates and offers.</p>
+                </div>
+            </div>
+            <div class="footer-bottom">
+                &copy; 2026 Tekzivo.com. All rights reserved. (Inspired by Maxbhi layout)
+            </div>
+        </div>
+    </footer>
+
+    <!-- Checkout Modal -->
+    <div class="modal-overlay" id="checkout-modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>Book Service / Checkout</h3>
+                <button class="close-modal" onclick="closeModal()">×</button>
+            </div>
+            
+            <div class="modal-body" id="modal-body-content">
+                <!-- Form Content -->
+                <div class="checkout-summary">
+                    <div class="checkout-summary-item">
+                        <span id="chk-service-name">Service</span>
+                        <span id="chk-device-name">Device</span>
+                    </div>
+                    <div class="checkout-summary-total">
+                        <span>Estimated Total:</span>
+                        <span id="chk-price">₹0</span>
+                    </div>
+                </div>
+
+                <div class="form-row">
+                    <div class="form-group">
+                        <label>Device Brand *</label>
+                        <input list="brand-list" class="form-control" id="f-brand" placeholder="Type or select Brand..." onchange="loadModelsForBrand(this.value)">
+                        <datalist id="brand-list"></datalist>
+                    </div>
+                    <div class="form-group">
+                        <label>Device Model *</label>
+                        <input list="model-list" class="form-control" id="f-model" placeholder="Type or select Model..." disabled>
+                        <datalist id="model-list"></datalist>
+                    </div>
+                </div>
+
+                <div class="form-row">
+                    <div class="form-group">
+                        <label>Full Name *</label>
+                        <input type="text" class="form-control" id="f-name" placeholder="John Doe">
+                    </div>
+                    <div class="form-group">
+                        <label>Phone Number *</label>
+                        <input type="tel" class="form-control" id="f-phone" placeholder="9876543210">
+                    </div>
+                </div>
+
+                <div class="form-row">
+                    <div class="form-group">
+                        <label>Pincode *</label>
+                        <input type="text" class="form-control" id="f-pincode" placeholder="600001" maxlength="6" oninput="validatePincode(this.value)">
+                        <div id="pincode-msg" style="font-size: 11px; margin-top: 4px;"></div>
+                    </div>
+                    <div class="form-group">
+                        <label>Preferred Date *</label>
+                        <input type="date" class="form-control" id="f-date">
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label>Time Slot *</label>
+                    <select class="form-control" id="f-timeslot">
+                        <option value="">Select a time slot</option>
+                        <option value="10 AM - 12 PM">10 AM - 12 PM</option>
+                        <option value="12 PM - 2 PM">12 PM - 2 PM</option>
+                        <option value="2 PM - 4 PM">2 PM - 4 PM</option>
+                        <option value="4 PM - 6 PM">4 PM - 6 PM</option>
+                    </select>
+                </div>
+
+                <div class="form-group">
+                    <label>Full Address *</label>
+                    <textarea class="form-control" id="f-address" rows="3" placeholder="Flat, Street, Area..."></textarea>
+                </div>
+
+                <button class="btn-submit" id="submit-btn" onclick="submitBooking()">CONFIRM BOOKING</button>
+            </div>
+
+            <!-- Success Content -->
+            <div class="modal-body success-msg" id="modal-success-content" style="display: none;">
+                <div class="success-icon">✓</div>
+                <h2 style="margin-bottom: 10px;">Booking Confirmed!</h2>
+                <p>Our technician will arrive as scheduled.</p>
+                <div class="ref-code" id="success-ref">TKZ-00000</div>
+                <p style="font-size: 12px; color: #777;">Please save this reference number.</p>
+                <button class="btn-submit" onclick="closeModal()" style="margin-top: 20px;">Continue Shopping</button>
+            </div>
+
+        </div>
+    </div>
+
+    <script>
+        const API_BASE = 'http://localhost:5000/api';
+        
+        const DEVICE_ISSUES = {
+            'Smartphone': {
+                'Screen Replacement': { price: 1800, icon: '📱' },
+                'Battery Draining': { price: 799, icon: '🔋' },
+                'Not Charging': { price: 650, icon: '🔌' },
+                'Speaker/Mic Issue': { price: 500, icon: '🔈' },
+                'Software/OS Issue': { price: 400, icon: '⚙️' },
+                'Water Damage': { price: 1500, icon: '💧' }
+            },
+            'Laptop': {
+                'Screen Damage': { price: 2500, icon: '💻' },
+                'Battery Replacement': { price: 1800, icon: '🔋' },
+                'Keys Not Working': { price: 1350, icon: '⌨️' },
+                'OS Installation': { price: 500, icon: '💿' },
+                'Motherboard Issue': { price: 3500, icon: '🔧' },
+                'Heating / Fan Cleaning': { price: 750, icon: '❄️' }
+            },
+            'LED TV': {
+                'No Display / Panel Issue': { price: 1500, icon: '📺' },
+                'Sound Issue': { price: 800, icon: '🔈' },
+                'Power Board Issue': { price: 1200, icon: '🔌' },
+                'Wall Mounting': { price: 500, icon: '🛠️' }
+            }
+        };
+
+        let allBrands = [];
+        let allModels = [];
+
+        function getServiceIcon(deviceType, serviceName) {
+            const name = serviceName.toLowerCase();
+            if (name.includes('screen')) return deviceType === 'Laptop' ? '💻' : '📱';
+            if (name.includes('battery')) return '🔋';
+            if (name.includes('charge') || name.includes('charging') || name.includes('port') || name.includes('power')) return '🔌';
+            if (name.includes('keyboard') || name.includes('key')) return '⌨️';
+            if (name.includes('os') || name.includes('software') || name.includes('installation')) return '💿';
+            if (name.includes('motherboard') || name.includes('board') || name.includes('panel')) return '🔧';
+            if (name.includes('heat') || name.includes('fan') || name.includes('cleaning') || name.includes('cooling') || name.includes('ac') || name.includes('gas')) return '❄️';
+            if (name.includes('display') || name.includes('tv')) return '📺';
+            if (name.includes('sound') || name.includes('speaker') || name.includes('mic')) return '🔈';
+            if (name.includes('water')) return '💧';
+            return '🛠️';
+        }
+
+        async function fetchBrandsAndModels() {
+            try {
+                const [bRes, mRes] = await Promise.all([
+                    fetch(`${API_BASE}/brands`).then(r => r.json()),
+                    fetch(`${API_BASE}/models`).then(r => r.json())
+                ]);
+                allBrands = bRes.data || [];
+                allModels = mRes.data || [];
+            } catch (e) {
+                console.error("Failed to load brands/models", e);
+            }
+        }
+
+        async function fetchServices() {
+            try {
+                const res = await fetch(`${API_BASE}/services`).then(r => r.json());
+                if (res.success && res.data && res.data.length > 0) {
+                    const newIssues = {};
+                    res.data.forEach(s => {
+                        if (!newIssues[s.device_type]) {
+                            newIssues[s.device_type] = {};
+                        }
+                        newIssues[s.device_type][s.name] = {
+                            price: s.base_price,
+                            icon: getServiceIcon(s.device_type, s.name),
+                            id: s.id
+                        };
+                    });
+                    for (const key in DEVICE_ISSUES) {
+                        delete DEVICE_ISSUES[key];
+                    }
+                    Object.assign(DEVICE_ISSUES, newIssues);
+                }
+            } catch (e) {
+                console.error("Failed to load services dynamically, using default offline data", e);
+            }
+            renderProducts();
+        }
+        
+        // Load data on start
+        (async function() {
+            await fetchBrandsAndModels();
+            await fetchServices();
+        })();
+
+        // State for checkout
+        let checkoutData = {
+            device: '',
+            issue: '',
+            price: 0,
+            service_id: null
+        };
+
+        function renderProducts(categoryFilter = 'All') {
+            const container = document.getElementById('product-sections');
+            container.innerHTML = '';
+
+            for (const [deviceType, issues] of Object.entries(DEVICE_ISSUES)) {
+                if (categoryFilter !== 'All' && deviceType !== categoryFilter) continue;
+
+                const section = document.createElement('div');
+                section.className = 'category-section';
+                section.innerHTML = `<h3 class="section-title">${deviceType} Services & Parts</h3>`;
+                
+                const grid = document.createElement('div');
+                grid.className = 'product-grid';
+
+                for (const [issueName, data] of Object.entries(issues)) {
+                    const card = document.createElement('div');
+                    card.className = 'product-card';
+                    card.innerHTML = `
+                        <div class="product-img">${data.icon}</div>
+                        <div class="product-title">${deviceType} - ${issueName}</div>
+                        <div class="product-price">₹${data.price}</div>
+                        <button class="btn-add" onclick="openCheckout('${deviceType}', '${issueName}', ${data.price}, '${data.id || ''}')">Book Service</button>
+                    `;
+                    grid.appendChild(card);
+                }
+
+                section.appendChild(grid);
+                container.appendChild(section);
+                // Add spacing
+                const spacer = document.createElement('div');
+                spacer.style.height = '40px';
+                container.appendChild(spacer);
+            }
+        }
+
+        function showCategory(category) {
+            renderProducts(category);
+        }
+
+        function searchProducts() {
+            const query = document.getElementById('search-input').value.toLowerCase();
+            if (!query) return renderProducts();
+
+            const container = document.getElementById('product-sections');
+            container.innerHTML = '<h3 class="section-title">Search Results</h3>';
+            
+            const grid = document.createElement('div');
+            grid.className = 'product-grid';
+            let found = false;
+
+            for (const [deviceType, issues] of Object.entries(DEVICE_ISSUES)) {
+                for (const [issueName, data] of Object.entries(issues)) {
+                    if (deviceType.toLowerCase().includes(query) || issueName.toLowerCase().includes(query)) {
+                        found = true;
+                        const card = document.createElement('div');
+                        card.className = 'product-card';
+                        card.innerHTML = `
+                            <div class="product-img">${data.icon}</div>
+                            <div class="product-title">${deviceType} - ${issueName}</div>
+                            <div class="product-price">₹${data.price}</div>
+                            <button class="btn-add" onclick="openCheckout('${deviceType}', '${issueName}', ${data.price}, '${data.id || ''}')">Book Service</button>
+                        `;
+                        grid.appendChild(card);
+                    }
+                }
+            }
+
+            if (!found) {
+                grid.innerHTML = '<p style="grid-column: 1/-1; text-align:center; padding: 40px;">No products or services found.</p>';
+            }
+            container.appendChild(grid);
+        }
+
+        // Initialize
+        renderProducts();
+
+        // Setup Date min
+        const tomorrow = new Date();
+        tomorrow.setDate(tomorrow.getDate() + 1);
+        document.getElementById('f-date').min = tomorrow.toISOString().split('T')[0];
+
+        // Modal Logic
+        function openCheckout(device, issue, price, serviceId = '') {
+            checkoutData = { device, issue, price, service_id: serviceId };
+            
+            document.getElementById('chk-service-name').innerText = issue;
+            document.getElementById('chk-device-name').innerText = `(${device})`;
+            document.getElementById('chk-price').innerText = `₹${price}`;
+            
+            // Populate brands dropdown based on device
+            const brandList = document.getElementById('brand-list');
+            const modelList = document.getElementById('model-list');
+            brandList.innerHTML = '';
+            modelList.innerHTML = '';
+            
+            document.getElementById('f-model').disabled = true;
+
+            const validBrands = new Set(allModels.filter(m => m.device_type === device).map(m => m.brand_id));
+            
+            allBrands.forEach(b => {
+                if (validBrands.has(b.id)) {
+                    const opt = document.createElement('option');
+                    opt.value = b.name;
+                    brandList.appendChild(opt);
+                }
+            });
+            
+            document.getElementById('modal-body-content').style.display = 'block';
+            document.getElementById('modal-success-content').style.display = 'none';
+            document.getElementById('checkout-modal').classList.add('active');
+        }
+
+        function loadModelsForBrand(brandName) {
+            const modelInput = document.getElementById('f-model');
+            const modelList = document.getElementById('model-list');
+            
+            modelList.innerHTML = '';
+            modelInput.value = '';
+
+            if (!brandName) {
+                modelInput.disabled = true;
+                return;
+            }
+            modelInput.disabled = false;
+            
+            const brandObj = allBrands.find(b => b.name.toLowerCase() === brandName.toLowerCase());
+            if (brandObj) {
+                const filteredModels = allModels.filter(m => m.brand_id === brandObj.id && m.device_type === checkoutData.device);
+                filteredModels.forEach(m => {
+                    const opt = document.createElement('option');
+                    opt.value = m.name;
+                    modelList.appendChild(opt);
+                });
+            }
+        }
+
+        function closeModal() {
+            document.getElementById('checkout-modal').classList.remove('active');
+            
+            // Reset form and view after a short delay to allow closing animation
+            setTimeout(() => {
+                document.getElementById('modal-body-content').style.display = 'block';
+                document.getElementById('modal-success-content').style.display = 'none';
+                document.getElementById('f-brand').value = '';
+                document.getElementById('f-model').value = '';
+                document.getElementById('f-name').value = '';
+                document.getElementById('f-phone').value = '';
+                document.getElementById('f-pincode').value = '';
+                document.getElementById('f-date').value = '';
+                document.getElementById('f-timeslot').value = '';
+                document.getElementById('f-address').value = '';
+                document.getElementById('pincode-msg').innerHTML = '';
+            }, 200);
+        }
+
+        async function validatePincode(pin) {
+            const msg = document.getElementById('pincode-msg');
+            if (pin.length < 6) { msg.innerText = ''; return; }
+
+            try {
+                const res = await fetch(`${API_BASE}/check-pincode/${pin}`);
+                const json = await res.json();
+                if (json.data?.covered) {
+                    msg.innerHTML = `<span style="color: green;">✓ Delivery / Service available in ${json.data.city}</span>`;
+                } else {
+                    msg.innerHTML = `<span style="color: red;">✗ Sorry, not serviceable yet</span>`;
+                }
+            } catch (e) {
+                msg.innerHTML = `<span style="color: blue;">Checking coverage...</span>`;
+            }
+        }
+
+        function showToast(msg) {
+            let t = document.querySelector('.toast');
+            if (!t) {
+                t = document.createElement('div');
+                t.className = 'toast';
+                document.body.appendChild(t);
+            }
+            t.textContent = msg;
+            t.classList.add('active');
+            setTimeout(() => { t.classList.remove('active'); }, 3000);
+        }
+
+        async function submitBooking() {
+            let brandName = document.getElementById('f-brand').value.trim();
+            let modelName = document.getElementById('f-model').value.trim();
+
+            const name = document.getElementById('f-name').value;
+            const phone = document.getElementById('f-phone').value;
+            const pincode = document.getElementById('f-pincode').value;
+            const date = document.getElementById('f-date').value;
+            const time_slot = document.getElementById('f-timeslot').value;
+            const address = document.getElementById('f-address').value;
+
+            if (!brandName || !modelName || !name || !phone || !pincode || !date || !time_slot || !address) {
+                showToast('❌ Please fill all required fields');
+                return;
+            }
+
+            const btn = document.getElementById('submit-btn');
+            btn.disabled = true;
+            btn.innerText = 'PROCESSING...';
+
+            let finalBrandId = null;
+            const existingBrand = allBrands.find(b => b.name.toLowerCase() === brandName.toLowerCase());
+            if (existingBrand) {
+                finalBrandId = existingBrand.id;
+            } else {
+                try {
+                    const bRes = await fetch(`${API_BASE}/brands`, { 
+                        method: 'POST', 
+                        headers: { 'Content-Type': 'application/json' }, 
+                        body: JSON.stringify({ name: brandName }) 
+                    }).then(r => r.json());
+                    finalBrandId = bRes.data?.id || brandName;
+                } catch(e) { console.error("Failed custom brand", e); finalBrandId = brandName; }
+            }
+
+            const existingModel = allModels.find(m => m.name.toLowerCase() === modelName.toLowerCase() && m.brand_id === finalBrandId);
+            if (!existingModel && finalBrandId !== brandName) {
+                try {
+                    await fetch(`${API_BASE}/models`, { 
+                        method: 'POST', 
+                        headers: { 'Content-Type': 'application/json' }, 
+                        body: JSON.stringify({ brand_id: finalBrandId, device_type: checkoutData.device, name: modelName }) 
+                    });
+                    fetchBrandsAndModels();
+                } catch(e) { console.error("Failed custom model", e); }
+            }
+
+            // Remove duplicate btn declaration
+
+            const payload = {
+                name: name,
+                phone: phone,
+                pincode: pincode,
+                address: address,
+                device_type: checkoutData.device,
+                issue_type: checkoutData.issue,
+                service_id: checkoutData.service_id || null,
+                issue_description: `Brand: ${brandName}, Model: ${modelName}`,
+                preferred_date: date,
+                time_slot: time_slot,
+                estimated_price: checkoutData.price
+            };
+
+            try {
+                const res = await fetch(`${API_BASE}/bookings`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(payload)
+                });
+                const json = await res.json();
+
+                if (json.success) {
+                    document.getElementById('modal-body-content').style.display = 'none';
+                    document.getElementById('modal-success-content').style.display = 'block';
+                    document.getElementById('success-ref').innerText = json.data.booking_ref;
+                } else {
+                    showToast('❌ Booking failed: ' + json.error);
+                }
+            } catch (e) {
+                // Fallback for demo if API is down
+                document.getElementById('modal-body-content').style.display = 'none';
+                document.getElementById('modal-success-content').style.display = 'block';
+                document.getElementById('success-ref').innerText = 'TKZ-DEMO-OK';
+            } finally {
+                btn.disabled = false;
+                btn.innerText = 'CONFIRM BOOKING';
+            }
+        }
+    </script>
+</body>
+</html>

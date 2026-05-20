@@ -1,0 +1,1896 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Tekzivo Admin Portal</title>
+  <link
+    href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800;900&family=Poppins:wght@400;500;600;700&display=swap"
+    rel="stylesheet" />
+  <style>
+    *,
+    *::before,
+    *::after {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0
+    }
+
+    :root {
+      --blue-dark: #0a1a6e;
+      --blue: #1533b8;
+      --blue-mid: #1e45d4;
+      --blue-light: #2d67f5;
+      --gold: #f5a623;
+      --bg: #f0f2f8;
+      --sidebar-bg: #0d1f7c;
+      --white: #fff;
+      --text: #1a2340;
+      --muted: #6b7a99;
+      --border: #e0e5f0;
+      --success: #16a34a;
+      --success-bg: #dcfce7;
+      --warning: #b45309;
+      --warning-bg: #fef9c3;
+      --danger: #dc2626;
+      --danger-bg: #fee2e2;
+      --info: #1d4ed8;
+      --info-bg: #dbeafe;
+      --pending: #7c3aed;
+      --pending-bg: #ede9fe;
+      --card-shadow: 0 2px 12px rgba(21, 51, 184, 0.08);
+      --font-head: 'Nunito', sans-serif;
+      --font-body: 'Poppins', sans-serif;
+
+      /* ⚠️ Change this to your server URL when deploying */
+      --api: "";
+    }
+
+    body {
+      font-family: var(--font-body);
+      background: var(--bg);
+      color: var(--text);
+      display: flex;
+      min-height: 100vh;
+      overflow-x: hidden
+    }
+
+    /* SIDEBAR */
+    .sidebar {
+      width: 240px;
+      min-height: 100vh;
+      background: var(--sidebar-bg);
+      display: flex;
+      flex-direction: column;
+      flex-shrink: 0;
+      position: sticky;
+      top: 0;
+      height: 100vh;
+      overflow-y: auto
+    }
+
+    .sidebar-logo {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 1.5rem 1.25rem 1.25rem;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.08)
+    }
+
+    .sidebar-logo span {
+      font-family: var(--font-head);
+      font-size: 1.4rem;
+      font-weight: 900;
+      color: #fff
+    }
+
+    .sidebar-logo span em {
+      color: var(--gold);
+      font-style: normal
+    }
+
+    .sidebar-label {
+      font-size: 0.65rem;
+      color: rgba(255, 255, 255, 0.35);
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      padding: 1.25rem 1.25rem 0.4rem
+    }
+
+    .sidebar-nav {
+      display: flex;
+      flex-direction: column;
+      gap: 2px;
+      padding: 0 0.75rem
+    }
+
+    .nav-item {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 0.65rem 0.75rem;
+      border-radius: 8px;
+      color: rgba(255, 255, 255, 0.65);
+      font-size: 0.82rem;
+      font-weight: 500;
+      cursor: pointer;
+      transition: all 0.15s
+    }
+
+    .nav-item:hover {
+      background: rgba(255, 255, 255, 0.08);
+      color: #fff
+    }
+
+    .nav-item.active {
+      background: var(--blue-light);
+      color: #fff;
+      font-weight: 600
+    }
+
+    .nav-icon {
+      font-size: 1rem;
+      width: 20px;
+      text-align: center;
+      flex-shrink: 0
+    }
+
+    .nav-badge {
+      margin-left: auto;
+      background: var(--gold);
+      color: #000;
+      font-size: 0.65rem;
+      font-weight: 800;
+      padding: 2px 7px;
+      border-radius: 20px
+    }
+
+    .sidebar-footer {
+      margin-top: auto;
+      padding: 1rem 1.25rem;
+      border-top: 1px solid rgba(255, 255, 255, 0.08)
+    }
+
+    .admin-avatar {
+      width: 34px;
+      height: 34px;
+      border-radius: 50%;
+      background: var(--gold);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: 800;
+      font-size: 0.75rem;
+      color: #000
+    }
+
+    .admin-name {
+      font-size: 0.8rem;
+      font-weight: 600;
+      color: #fff
+    }
+
+    .admin-role {
+      font-size: 0.68rem;
+      color: rgba(255, 255, 255, 0.45)
+    }
+
+    /* MAIN */
+    .main {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      min-width: 0
+    }
+
+    .topbar {
+      background: var(--white);
+      border-bottom: 1px solid var(--border);
+      padding: 0 1.75rem;
+      height: 64px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      position: sticky;
+      top: 0;
+      z-index: 100
+    }
+
+    .topbar-title {
+      font-family: var(--font-head);
+      font-size: 1.2rem;
+      font-weight: 800
+    }
+
+    .topbar-right {
+      display: flex;
+      align-items: center;
+      gap: 1rem
+    }
+
+    .api-status {
+      font-size: 0.7rem;
+      padding: 4px 10px;
+      border-radius: 20px;
+      font-weight: 700
+    }
+
+    .api-status.online {
+      background: var(--success-bg);
+      color: var(--success)
+    }
+
+    .api-status.offline {
+      background: var(--danger-bg);
+      color: var(--danger)
+    }
+
+    .btn-refresh {
+      background: var(--bg);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 0.4rem 0.75rem;
+      font-size: 0.78rem;
+      cursor: pointer;
+      font-family: var(--font-body);
+      transition: all 0.15s
+    }
+
+    .btn-refresh:hover {
+      border-color: var(--blue);
+      color: var(--blue)
+    }
+
+    .content {
+      padding: 1.75rem;
+      flex: 1
+    }
+
+    /* STATS */
+    .stats-grid {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 1rem;
+      margin-bottom: 1.75rem
+    }
+
+    .stat-card {
+      background: var(--white);
+      border-radius: 14px;
+      padding: 1.25rem 1.5rem;
+      box-shadow: var(--card-shadow);
+      border: 1px solid var(--border);
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between
+    }
+
+    .stat-label {
+      font-size: 0.75rem;
+      color: var(--muted);
+      margin-bottom: 0.3rem;
+      font-weight: 500
+    }
+
+    .stat-value {
+      font-family: var(--font-head);
+      font-size: 1.75rem;
+      font-weight: 900
+    }
+
+    .stat-sub {
+      font-size: 0.7rem;
+      margin-top: 4px;
+      color: var(--muted)
+    }
+
+    .stat-icon {
+      width: 44px;
+      height: 44px;
+      border-radius: 12px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1.3rem;
+      flex-shrink: 0
+    }
+
+    /* PANEL / TABLE */
+    .panel {
+      background: var(--white);
+      border-radius: 14px;
+      box-shadow: var(--card-shadow);
+      border: 1px solid var(--border);
+      overflow: hidden
+    }
+
+    .panel-header {
+      padding: 1.1rem 1.5rem;
+      border-bottom: 1px solid var(--border);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      flex-wrap: wrap;
+      gap: 0.75rem
+    }
+
+    .panel-title {
+      font-family: var(--font-head);
+      font-size: 1rem;
+      font-weight: 800
+    }
+
+    .panel-actions {
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+      flex-wrap: wrap
+    }
+
+    .search-box {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      background: var(--bg);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 0.4rem 0.75rem
+    }
+
+    .search-box input {
+      border: none;
+      background: transparent;
+      font-family: var(--font-body);
+      font-size: 0.8rem;
+      color: var(--text);
+      outline: none;
+      width: 180px
+    }
+
+    .filter-select {
+      background: var(--bg);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 0.4rem 0.75rem;
+      font-family: var(--font-body);
+      font-size: 0.8rem;
+      color: var(--text);
+      cursor: pointer;
+      outline: none
+    }
+
+    .btn-export {
+      background: var(--blue-light);
+      color: #fff;
+      border: none;
+      padding: 0.45rem 1rem;
+      border-radius: 8px;
+      font-family: var(--font-body);
+      font-size: 0.78rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: background 0.2s
+    }
+
+    .btn-export:hover {
+      background: var(--blue)
+    }
+
+    /* TABLE */
+    .table-wrap {
+      overflow-x: auto
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      min-width: 780px
+    }
+
+    thead {
+      background: var(--bg)
+    }
+
+    th {
+      padding: 0.75rem 1.25rem;
+      text-align: left;
+      font-size: 0.72rem;
+      font-weight: 700;
+      color: var(--muted);
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+      border-bottom: 1px solid var(--border);
+      white-space: nowrap
+    }
+
+    td {
+      padding: 0.85rem 1.25rem;
+      font-size: 0.82rem;
+      border-bottom: 1px solid var(--border);
+      vertical-align: middle
+    }
+
+    tr:last-child td {
+      border-bottom: none
+    }
+
+    tr:hover td {
+      background: rgba(21, 51, 184, 0.025)
+    }
+
+    .booking-id {
+      font-family: monospace;
+      font-size: 0.75rem;
+      color: var(--muted)
+    }
+
+    .customer-cell {
+      display: flex;
+      align-items: center;
+      gap: 8px
+    }
+
+    .cust-avatar {
+      width: 30px;
+      height: 30px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 0.65rem;
+      font-weight: 800;
+      color: #fff;
+      flex-shrink: 0
+    }
+
+    .cust-name {
+      font-weight: 600;
+      font-size: 0.82rem
+    }
+
+    .cust-phone {
+      font-size: 0.7rem;
+      color: var(--muted)
+    }
+
+    /* BADGES */
+    .badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      padding: 3px 10px;
+      border-radius: 20px;
+      font-size: 0.72rem;
+      font-weight: 700;
+      white-space: nowrap
+    }
+
+    .badge::before {
+      content: '';
+      width: 6px;
+      height: 6px;
+      border-radius: 50%;
+      background: currentColor;
+      opacity: 0.7
+    }
+
+    .badge-Pending {
+      background: var(--pending-bg);
+      color: var(--pending)
+    }
+
+    .badge-Confirmed {
+      background: var(--info-bg);
+      color: var(--info)
+    }
+
+    .badge-Completed {
+      background: var(--success-bg);
+      color: var(--success)
+    }
+
+    .badge-Cancelled {
+      background: var(--danger-bg);
+      color: var(--danger)
+    }
+
+    .badge-In.Progress,
+    .badge-In {
+      background: var(--warning-bg);
+      color: var(--warning)
+    }
+
+    /* ACTION BUTTONS */
+    .action-btns {
+      display: flex;
+      gap: 6px
+    }
+
+    .btn-sm {
+      padding: 4px 10px;
+      border-radius: 6px;
+      font-size: 0.72rem;
+      font-weight: 600;
+      cursor: pointer;
+      border: 1px solid transparent;
+      transition: all 0.15s;
+      font-family: var(--font-body)
+    }
+
+    .btn-view {
+      background: var(--info-bg);
+      color: var(--info)
+    }
+
+    .btn-view:hover {
+      background: var(--info);
+      color: #fff
+    }
+
+    .btn-cancel-sm {
+      background: var(--danger-bg);
+      color: var(--danger)
+    }
+
+    .btn-cancel-sm:hover {
+      background: var(--danger);
+      color: #fff
+    }
+
+    /* PAGINATION */
+    .pagination {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 1rem 1.5rem;
+      border-top: 1px solid var(--border)
+    }
+
+    .page-info {
+      font-size: 0.78rem;
+      color: var(--muted)
+    }
+
+    .page-btns {
+      display: flex;
+      gap: 6px
+    }
+
+    .page-btn {
+      width: 32px;
+      height: 32px;
+      border-radius: 6px;
+      border: 1px solid var(--border);
+      background: var(--white);
+      font-size: 0.8rem;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-family: var(--font-body);
+      transition: all 0.15s
+    }
+
+    .page-btn:hover {
+      border-color: var(--blue);
+      color: var(--blue)
+    }
+
+    .page-btn.active {
+      background: var(--blue);
+      color: #fff;
+      border-color: var(--blue)
+    }
+
+    /* LOADING SKELETON */
+    .skeleton {
+      background: linear-gradient(90deg, #e8edf8 25%, #f0f2f8 50%, #e8edf8 75%);
+      background-size: 200% 100%;
+      animation: shimmer 1.2s infinite;
+      border-radius: 6px
+    }
+
+    @keyframes shimmer {
+      0% {
+        background-position: 200% 0
+      }
+
+      100% {
+        background-position: -200% 0
+      }
+    }
+
+    .skeleton-row td {
+      padding: 1rem 1.25rem
+    }
+
+    /* MODAL */
+    .modal-overlay {
+      display: none;
+      position: fixed;
+      inset: 0;
+      z-index: 1000;
+      background: rgba(0, 0, 0, 0.45);
+      align-items: center;
+      justify-content: center
+    }
+
+    .modal-overlay.open {
+      display: flex
+    }
+
+    .modal {
+      background: var(--white);
+      border-radius: 16px;
+      width: 540px;
+      max-width: 95vw;
+      box-shadow: 0 20px 60px rgba(0, 0, 0, 0.25);
+      overflow: hidden
+    }
+
+    .modal-header {
+      padding: 1.25rem 1.5rem;
+      border-bottom: 1px solid var(--border);
+      display: flex;
+      align-items: center;
+      justify-content: space-between
+    }
+
+    .modal-title {
+      font-family: var(--font-head);
+      font-size: 1.1rem;
+      font-weight: 800
+    }
+
+    .modal-close {
+      background: none;
+      border: none;
+      font-size: 1.3rem;
+      cursor: pointer;
+      color: var(--muted)
+    }
+
+    .modal-body {
+      padding: 1.5rem;
+      max-height: 70vh;
+      overflow-y: auto
+    }
+
+    .detail-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 1rem
+    }
+
+    .detail-item {}
+
+    .detail-label {
+      font-size: 0.7rem;
+      font-weight: 700;
+      color: var(--muted);
+      text-transform: uppercase;
+      letter-spacing: 0.07em;
+      margin-bottom: 3px
+    }
+
+    .detail-value {
+      font-size: 0.85rem;
+      font-weight: 600
+    }
+
+    .detail-full {
+      grid-column: 1/-1
+    }
+
+    .modal-footer {
+      padding: 1rem 1.5rem;
+      border-top: 1px solid var(--border);
+      display: flex;
+      gap: 0.75rem;
+      justify-content: flex-end
+    }
+
+    .btn-primary {
+      background: var(--blue);
+      color: #fff;
+      border: none;
+      padding: 0.6rem 1.25rem;
+      border-radius: 8px;
+      font-family: var(--font-body);
+      font-size: 0.85rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: background 0.15s
+    }
+
+    .btn-primary:hover {
+      background: var(--blue-dark)
+    }
+
+    .btn-secondary {
+      background: var(--bg);
+      color: var(--text);
+      border: 1px solid var(--border);
+      padding: 0.6rem 1.25rem;
+      border-radius: 8px;
+      font-family: var(--font-body);
+      font-size: 0.85rem;
+      cursor: pointer
+    }
+
+    .status-select {
+      width: 100%;
+      padding: 0.6rem 0.75rem;
+      border: 1.5px solid var(--border);
+      border-radius: 8px;
+      font-family: var(--font-body);
+      font-size: 0.85rem;
+      outline: none
+    }
+
+    .status-select:focus {
+      border-color: var(--blue-light)
+    }
+
+    /* BOTTOM GRID */
+    .bottom-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 1rem;
+      margin-top: 1.25rem
+    }
+
+    .chart-bar-wrap {
+      display: flex;
+      align-items: flex-end;
+      gap: 6px;
+      height: 80px;
+      margin-top: 0.75rem
+    }
+
+    .chart-bar-col {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 4px;
+      flex: 1
+    }
+
+    .chart-bar {
+      width: 100%;
+      border-radius: 4px 4px 0 0;
+      background: var(--blue-light);
+      opacity: 0.75;
+      min-height: 4px;
+      transition: opacity 0.15s
+    }
+
+    .chart-bar:hover {
+      opacity: 1
+    }
+
+    .chart-label {
+      font-size: 0.65rem;
+      color: var(--muted)
+    }
+
+    .tech-row {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 0.65rem;
+      border-radius: 8px;
+      background: var(--bg);
+      margin-top: 0.5rem
+    }
+
+    .tech-av {
+      width: 32px;
+      height: 32px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 0.65rem;
+      font-weight: 800;
+      color: #fff;
+      flex-shrink: 0
+    }
+
+    .tech-info {
+      flex: 1
+    }
+
+    .tech-name {
+      font-size: 0.8rem;
+      font-weight: 600
+    }
+
+    .tech-spec {
+      font-size: 0.7rem;
+      color: var(--muted)
+    }
+
+    .tech-jobs-num {
+      font-family: var(--font-head);
+      font-size: 1rem;
+      font-weight: 800;
+      color: var(--blue)
+    }
+
+    .tech-jobs-lbl {
+      font-size: 0.65rem;
+      color: var(--muted);
+      text-align: right
+    }
+
+    /* TOAST */
+    .toast {
+      position: fixed;
+      bottom: 2rem;
+      right: 2rem;
+      z-index: 2000;
+      background: var(--text);
+      color: #fff;
+      padding: 0.85rem 1.5rem;
+      border-radius: 10px;
+      font-size: 0.85rem;
+      font-weight: 600;
+      box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+      transform: translateY(100px);
+      opacity: 0;
+      transition: all 0.3s
+    }
+
+    .toast.show {
+      transform: translateY(0);
+      opacity: 1
+    }
+
+    /* Custom Confirmation Dialog */
+    .confirm-overlay {
+      position: fixed;
+      top: 0; left: 0; width: 100%; height: 100%;
+      background: rgba(0,0,0,0.6);
+      display: none;
+      align-items: center;
+      justify-content: center;
+      z-index: 20000;
+    }
+    .confirm-overlay.active {
+      display: flex;
+    }
+    .confirm-box {
+      background: var(--white);
+      padding: 20px;
+      border-radius: 12px;
+      width: 90%;
+      max-width: 400px;
+      box-shadow: 0 10px 30px rgba(0,0,0,0.15);
+      text-align: center;
+      font-family: var(--font-body);
+    }
+    .confirm-title {
+      font-family: var(--font-head);
+      font-size: 1.25rem;
+      font-weight: 800;
+      margin-bottom: 12px;
+      color: var(--text);
+    }
+    .confirm-message {
+      color: var(--muted);
+      margin-bottom: 20px;
+      font-size: 0.9rem;
+    }
+    .confirm-actions {
+      display: flex;
+      justify-content: center;
+      gap: 12px;
+    }
+    .btn-confirm-yes {
+      background: var(--danger);
+      color: white;
+      border: none;
+      padding: 8px 18px;
+      border-radius: 8px;
+      cursor: pointer;
+      font-weight: 600;
+      font-size: 0.85rem;
+      transition: background 0.2s;
+    }
+    .btn-confirm-yes:hover {
+      background: #b91c1c;
+    }
+    .btn-confirm-no {
+      background: var(--bg);
+      color: var(--text);
+      border: none;
+      padding: 8px 18px;
+      border-radius: 8px;
+      cursor: pointer;
+      font-weight: 600;
+      font-size: 0.85rem;
+      transition: background 0.2s;
+    }
+    .btn-confirm-no:hover {
+      background: var(--border);
+    }
+
+    @media(max-width:900px) {
+      .sidebar {
+        width: 60px
+      }
+
+      .sidebar-logo span,
+      .nav-item span,
+      .admin-name,
+      .admin-role,
+      .sidebar-label,
+      .nav-badge {
+        display: none
+      }
+
+      .sidebar-logo,
+      .nav-item {
+        justify-content: center;
+        padding: 0.85rem
+      }
+
+      .stats-grid {
+        grid-template-columns: 1fr 1fr
+      }
+
+      .bottom-grid {
+        grid-template-columns: 1fr
+      }
+    }
+  </style>
+</head>
+
+<body>
+
+  <!-- API CONFIG — change this to your Flask server URL -->
+  <script>const API_BASE = 'http://localhost:5000/api';</script>
+
+  <!-- SIDEBAR -->
+  <aside class="sidebar">
+    <div class="sidebar-logo">
+      <svg width="28" height="28" viewBox="0 0 40 40" fill="none">
+        <circle cx="20" cy="20" r="18" fill="#1533b8" />
+        <path d="M12 14c0-1.1.9-2 2-2h12a2 2 0 012 2v2H12v-2z" fill="#f5a623" />
+        <path d="M10 18h20v10a2 2 0 01-2 2H12a2 2 0 01-2-2V18z" fill="white" fill-opacity="0.15" />
+      </svg>
+      <span>Tek<em>zivo</em> <span style="font-size:0.6rem;font-weight:400;opacity:0.5">Admin</span></span>
+    </div>
+    <div class="sidebar-label">Main</div>
+    <nav class="sidebar-nav">
+      <div class="nav-item active" onclick="loadSection('dashboard',this)"><span
+          class="nav-icon">📊</span><span>Dashboard</span></div>
+      <div class="nav-item" onclick="loadSection('bookings',this)"><span
+          class="nav-icon">📋</span><span>Bookings</span><span class="nav-badge" id="pending-badge">—</span></div>
+      <div class="nav-item" onclick="loadSection('technicians',this)"><span
+          class="nav-icon">👨‍🔧</span><span>Technicians</span></div>
+      <div class="nav-item" onclick="loadSection('customers',this)"><span
+          class="nav-icon">👥</span><span>Customers</span></div>
+      <div class="nav-item" onclick="loadSection('brands',this)"><span
+          class="nav-icon">🏷️</span><span>Brands & Models</span></div>
+      <div class="nav-item" onclick="loadSection('services',this)"><span
+          class="nav-icon">💰</span><span>Services & Pricing</span></div>
+    </nav>
+    <div class="sidebar-label">System</div>
+    <nav class="sidebar-nav">
+      <div class="nav-item" onclick="loadSection('dashboard',this)"><span
+          class="nav-icon">⚙️</span><span>Settings</span></div>
+    </nav>
+    <div class="sidebar-footer">
+      <div style="display:flex;align-items:center;gap:10px">
+        <div class="admin-avatar">AD</div>
+        <div>
+          <div class="admin-name">Admin</div>
+          <div class="admin-role">Super Admin</div>
+        </div>
+      </div>
+    </div>
+  </aside>
+
+  <!-- MAIN -->
+  <div class="main">
+    <div class="topbar">
+      <div class="topbar-title" id="page-title">Dashboard</div>
+      <div class="topbar-right">
+        <div class="api-status offline" id="api-badge">⏳ Connecting...</div>
+        <button class="btn-refresh" onclick="refreshData()">↻ Refresh</button>
+        <div style="font-size:0.75rem;color:var(--muted)" id="last-updated"></div>
+      </div>
+    </div>
+
+    <div class="content" id="main-content">
+      <div style="text-align:center;padding:4rem;color:var(--muted)">Loading dashboard...</div>
+    </div>
+  </div>
+
+  <!-- MODAL -->
+  <div class="modal-overlay" id="booking-modal">
+    <div class="modal">
+      <div class="modal-header">
+        <div class="modal-title">Booking Details</div>
+        <button class="modal-close" onclick="closeModal()">✕</button>
+      </div>
+      <div class="modal-body" id="modal-body"></div>
+      <div class="modal-footer">
+        <button class="btn-secondary" onclick="closeModal()">Close</button>
+        <button class="btn-primary" onclick="saveStatus()">Save Changes</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="toast" id="toast"></div>
+
+  <script>
+    // ─── STATE ────────────────────────────────
+    let currentSection = 'dashboard';
+    let currentBookingId = null;
+    let bookingsCache = [];
+    let statsCache = {};
+    let currentPage = 1;
+    const PER_PAGE = 15;
+
+    const COLORS = ['#1533b8', '#7c3aed', '#0e7490', '#b45309', '#16a34a', '#dc2626', '#1d4ed8', '#d97706'];
+    const initials = n => n.split(' ').map(w => w[0]).join('').slice(0, 2).toUpperCase();
+    const colorFor = n => COLORS[n.charCodeAt(0) % COLORS.length];
+
+    // ─── API HELPERS ──────────────────────────
+    async function apiFetch(path, opts = {}) {
+      const res = await fetch(API_BASE + path, {
+        headers: { 'Content-Type': 'application/json' },
+        ...opts
+      });
+      if (!res.ok) throw new Error(`HTTP ${res.status}`);
+      return res.json();
+    }
+
+    async function checkApiHealth() {
+      try {
+        await apiFetch('/health');
+        document.getElementById('api-badge').textContent = '✅ API Online';
+        document.getElementById('api-badge').className = 'api-status online';
+        return true;
+      } catch {
+        document.getElementById('api-badge').textContent = '❌ API Offline';
+        document.getElementById('api-badge').className = 'api-status offline';
+        return false;
+      }
+    }
+
+    // ─── DASHBOARD ────────────────────────────
+    async function renderDashboard() {
+      document.getElementById('page-title').textContent = 'Dashboard';
+      const content = document.getElementById('main-content');
+      content.innerHTML = '<div style="text-align:center;padding:3rem;color:var(--muted)">Loading stats...</div>';
+
+      let stats = {
+        totals: { total: 0, pending: 0, confirmed: 0, in_progress: 0, completed: 0, cancelled: 0 },
+        revenue: 0, avg_rating: 0, top_technicians: [], daily_bookings: []
+      };
+
+      try {
+        const res = await apiFetch('/dashboard/stats');
+        stats = res.data;
+        statsCache = stats;
+        const pb = document.getElementById('pending-badge');
+        if (pb) pb.textContent = stats.totals.pending || '0';
+      } catch {
+        // Use cached or defaults
+        if (Object.keys(statsCache).length) stats = statsCache;
+      }
+
+      const t = stats.totals;
+      content.innerHTML = `
+    <!-- STATS -->
+    <div class="stats-grid">
+      <div class="stat-card">
+        <div>
+          <div class="stat-label">Total Bookings</div>
+          <div class="stat-value">${t.total.toLocaleString()}</div>
+          <div class="stat-sub">${t.pending} pending · ${t.confirmed} confirmed</div>
+        </div>
+        <div class="stat-icon" style="background:#dbeafe">📋</div>
+      </div>
+      <div class="stat-card">
+        <div>
+          <div class="stat-label">Pending</div>
+          <div class="stat-value" style="color:var(--pending)">${t.pending}</div>
+          <div class="stat-sub" style="color:var(--pending)">Needs assignment</div>
+        </div>
+        <div class="stat-icon" style="background:#ede9fe">⏳</div>
+      </div>
+      <div class="stat-card">
+        <div>
+          <div class="stat-label">Revenue (Completed)</div>
+          <div class="stat-value">₹${(stats.revenue / 1000).toFixed(1)}K</div>
+          <div class="stat-sub">${t.completed} jobs done</div>
+        </div>
+        <div class="stat-icon" style="background:#dcfce7">💰</div>
+      </div>
+      <div class="stat-card">
+        <div>
+          <div class="stat-label">Avg Rating</div>
+          <div class="stat-value">${stats.avg_rating}★</div>
+          <div class="stat-sub">Across all technicians</div>
+        </div>
+        <div class="stat-icon" style="background:#fef9c3">⭐</div>
+      </div>
+    </div>
+
+    <!-- BOOKINGS TABLE -->
+    <div class="panel" style="margin-bottom:1.25rem">
+      <div class="panel-header">
+        <div class="panel-title">Recent Bookings</div>
+        <div class="panel-actions">
+          <div class="search-box">🔍 <input type="text" placeholder="Search name, ref, phone..." id="search-input" oninput="filterAndRenderTable()"/></div>
+          <select class="filter-select" id="status-filter" onchange="filterAndRenderTable()">
+            <option value="">All Status</option>
+            <option>Pending</option><option>Confirmed</option>
+            <option>In Progress</option><option>Completed</option><option>Cancelled</option>
+          </select>
+          <button class="btn-export" onclick="exportCSV()">⬇ Export CSV</button>
+        </div>
+      </div>
+      <div class="table-wrap"><table>
+        <thead><tr>
+          <th>Booking Ref</th><th>Customer</th><th>Service</th><th>Device</th>
+          <th>Date / Slot</th><th>Amount</th><th>Status</th><th>Actions</th>
+        </tr></thead>
+        <tbody id="bookings-tbody">
+          ${skeletonRows(6)}
+        </tbody>
+      </table></div>
+      <div class="pagination">
+        <div class="page-info" id="page-info">Loading...</div>
+        <div class="page-btns" id="page-btns"></div>
+      </div>
+    </div>
+
+    <!-- BOTTOM -->
+    <div class="bottom-grid">
+      <div class="panel" style="padding:1.25rem 1.5rem">
+        <div class="panel-title">Bookings (last 7 days)</div>
+        <div class="chart-bar-wrap" id="daily-chart">
+          ${buildDailyChart(stats.daily_bookings)}
+        </div>
+      </div>
+      <div class="panel" style="padding:1.25rem 1.5rem">
+        <div class="panel-title">Top Technicians</div>
+        <div id="tech-list">
+          ${buildTechList(stats.top_technicians)}
+        </div>
+      </div>
+    </div>`;
+
+      loadBookings();
+      updateTimestamp();
+    }
+
+    // ─── BOOKINGS LOAD ────────────────────────
+    async function loadBookings() {
+      try {
+        const res = await apiFetch('/bookings?per_page=200');
+        bookingsCache = res.data.bookings || [];
+      } catch {
+        // Keep existing cache or use demo data
+        if (!bookingsCache.length) bookingsCache = getDemoData();
+      }
+      filterAndRenderTable();
+    }
+
+    function filterAndRenderTable() {
+      const search = (document.getElementById('search-input')?.value || '').toLowerCase();
+      const status = document.getElementById('status-filter')?.value || '';
+
+      const filtered = bookingsCache.filter(b => {
+        const cname = b.customer?.name || '';
+        const cphone = b.customer?.phone || '';
+        const ref = b.booking_ref || '';
+        const matchS = !search || cname.toLowerCase().includes(search) ||
+          cphone.includes(search) || ref.toLowerCase().includes(search);
+        const matchF = !status || b.status === status;
+        return matchS && matchF;
+      });
+
+      const total = filtered.length;
+      const start = (currentPage - 1) * PER_PAGE;
+      const page = filtered.slice(start, start + PER_PAGE);
+
+      const tbody = document.getElementById('bookings-tbody');
+      if (!tbody) return;
+
+      if (!page.length) {
+        tbody.innerHTML = `<tr><td colspan="8" style="text-align:center;padding:2rem;color:var(--muted)">No bookings found</td></tr>`;
+      } else {
+        tbody.innerHTML = page.map(b => bookingRow(b)).join('');
+      }
+
+      const pi = document.getElementById('page-info');
+      if (pi) pi.textContent = `Showing ${start + 1}–${Math.min(start + PER_PAGE, total)} of ${total} bookings`;
+
+      buildPagination(total);
+    }
+
+    function bookingRow(b) {
+      const cname = b.customer?.name || '—';
+      const cphone = b.customer?.phone || '';
+      const svc = b.service?.name || b.service_name || '—';
+      const dev = b.service?.device_type || b.device_type || '—';
+      const price = b.estimated_price ? `₹${Number(b.estimated_price).toLocaleString()}` : '—';
+      const badge = badgeHTML(b.status);
+      const canCancel = !['Cancelled', 'Completed'].includes(b.status);
+
+      return `<tr>
+    <td><span class="booking-id">${b.booking_ref}</span></td>
+    <td><div class="customer-cell">
+      <div class="cust-avatar" style="background:${colorFor(cname)}">${initials(cname)}</div>
+      <div><div class="cust-name">${cname}</div><div class="cust-phone">${cphone}</div></div>
+    </div></td>
+    <td>${svc}</td>
+    <td>${dev}</td>
+    <td><div style="font-size:0.82rem">${b.preferred_date || '—'}</div>
+        <div style="font-size:0.7rem;color:var(--muted)">${b.time_slot || ''}</div></td>
+    <td><strong>${price}</strong></td>
+    <td>${badge}</td>
+    <td><div class="action-btns">
+      <button class="btn-sm btn-view" onclick="openModal('${b.id}')">View</button>
+      ${canCancel ? `<button class="btn-sm btn-cancel-sm" onclick="cancelBooking('${b.booking_ref}','${b.id}')">Cancel</button>` : ''}
+    </div></td>
+  </tr>`;
+    }
+
+    function badgeHTML(status) {
+      const cls = status?.replace(' ', '.') || 'Pending';
+      return `<span class="badge badge-${cls}">${status}</span>`;
+    }
+
+    function buildPagination(total) {
+      const pages = Math.ceil(total / PER_PAGE);
+      const pb = document.getElementById('page-btns');
+      if (!pb) return;
+      let html = `<button class="page-btn" onclick="goPage(${currentPage - 1})">‹</button>`;
+      for (let i = 1; i <= Math.min(pages, 5); i++) {
+        html += `<button class="page-btn ${i === currentPage ? 'active' : ''}" onclick="goPage(${i})">${i}</button>`;
+      }
+      html += `<button class="page-btn" onclick="goPage(${currentPage + 1})">›</button>`;
+      pb.innerHTML = html;
+    }
+
+    function goPage(p) {
+      const total = bookingsCache.length;
+      const max = Math.ceil(total / PER_PAGE);
+      currentPage = Math.max(1, Math.min(max, p));
+      filterAndRenderTable();
+    }
+
+    // ─── MODAL ────────────────────────────────
+    async function openModal(bookingId) {
+      currentBookingId = bookingId;
+      document.getElementById('modal-body').innerHTML = '<div style="text-align:center;padding:2rem;color:var(--muted)">Loading...</div>';
+      document.getElementById('booking-modal').classList.add('open');
+
+      let b = bookingsCache.find(x => x.id === bookingId);
+
+      if (!b) {
+        try {
+          const res = await apiFetch(`/bookings/${bookingId}`);
+          b = res.data;
+        } catch { return; }
+      }
+
+      const cname = b.customer?.name || '—';
+      const cphone = b.customer?.phone || '—';
+      const svc = b.service?.name || '—';
+      const dev = b.service?.device_type || '—';
+      const tech = b.technician?.name || 'Not assigned';
+      const price = b.estimated_price ? `₹${Number(b.estimated_price).toLocaleString()}` : '—';
+
+      document.getElementById('modal-body').innerHTML = `
+    <div class="detail-grid">
+      <div class="detail-item"><div class="detail-label">Booking Ref</div><div class="detail-value" style="font-family:monospace">${b.booking_ref}</div></div>
+      <div class="detail-item"><div class="detail-label">Status</div>
+        <select class="status-select" id="modal-status">
+          ${['Pending', 'Confirmed', 'In Progress', 'Completed', 'Cancelled'].map(s => `<option${s === b.status ? ' selected' : ''}>${s}</option>`).join('')}
+        </select>
+      </div>
+      <div class="detail-item"><div class="detail-label">Customer</div><div class="detail-value">${cname}</div></div>
+      <div class="detail-item"><div class="detail-label">Phone</div><div class="detail-value">${cphone}</div></div>
+      <div class="detail-item"><div class="detail-label">Device</div><div class="detail-value">${dev}</div></div>
+      <div class="detail-item"><div class="detail-label">Service</div><div class="detail-value">${svc}</div></div>
+      <div class="detail-item"><div class="detail-label">Date</div><div class="detail-value">${b.preferred_date || '—'}</div></div>
+      <div class="detail-item"><div class="detail-label">Time Slot</div><div class="detail-value">${b.time_slot || '—'}</div></div>
+      <div class="detail-item"><div class="detail-label">Est. Price</div><div class="detail-value">${price}</div></div>
+      <div class="detail-item"><div class="detail-label">Technician</div><div class="detail-value">${tech}</div></div>
+      <div class="detail-item"><div class="detail-label">Pincode</div><div class="detail-value">${b.pincode || '—'}</div></div>
+      <div class="detail-item"><div class="detail-label">Booked At</div><div class="detail-value">${b.booked_at?.slice(0, 16).replace('T', ' ') || '—'}</div></div>
+      <div class="detail-full"><div class="detail-label">Issue Description</div><div class="detail-value">${b.issue_description || 'Not provided'}</div></div>
+    </div>`;
+    }
+
+    function closeModal() {
+      document.getElementById('booking-modal').classList.remove('open');
+      currentBookingId = null;
+    }
+
+    async function saveStatus() {
+      const newStatus = document.getElementById('modal-status')?.value;
+      if (!newStatus || !currentBookingId) return;
+
+      try {
+        await apiFetch(`/bookings/${currentBookingId}/status`, {
+          method: 'PATCH',
+          body: JSON.stringify({ status: newStatus })
+        });
+        // Update cache
+        const idx = bookingsCache.findIndex(b => b.id === currentBookingId);
+        if (idx !== -1) bookingsCache[idx].status = newStatus;
+        filterAndRenderTable();
+        showToast(`✅ Status updated to "${newStatus}"`);
+      } catch {
+        // Update cache locally (offline mode)
+        const idx = bookingsCache.findIndex(b => b.id === currentBookingId);
+        if (idx !== -1) bookingsCache[idx].status = newStatus;
+        filterAndRenderTable();
+        showToast(`✅ Status updated (local only — API offline)`);
+      }
+      closeModal();
+    }
+
+    async function cancelBooking(ref, id) {
+      showConfirm('Cancel Booking', `Are you sure you want to cancel booking ${ref}?`, async () => {
+        try {
+          await apiFetch(`/bookings/${id}`, { method: 'DELETE' });
+        } catch { /* offline */ }
+        const idx = bookingsCache.findIndex(b => b.id === id);
+        if (idx !== -1) bookingsCache[idx].status = 'Cancelled';
+        filterAndRenderTable();
+        showToast('Booking cancelled.');
+      });
+    }
+
+    // ─── TECHNICIANS SECTION ──────────────────
+    async function renderTechnicians() {
+      document.getElementById('page-title').textContent = 'Technicians';
+      const content = document.getElementById('main-content');
+      content.innerHTML = '<div style="text-align:center;padding:3rem;color:var(--muted)">Loading technicians...</div>';
+      let techs = [];
+      try {
+        const res = await apiFetch('/technicians');
+        techs = res.data;
+      } catch { techs = []; }
+
+      content.innerHTML = `
+    <div class="panel">
+      <div class="panel-header">
+        <div class="panel-title">All Technicians</div>
+      </div>
+      <div class="table-wrap"><table>
+        <thead><tr>
+          <th>Name</th><th>Phone</th><th>Specialization</th>
+          <th>Pincode</th><th>Rating</th><th>Jobs</th><th>Status</th>
+        </tr></thead>
+        <tbody>
+          ${techs.length ? techs.map(t => `<tr>
+            <td><div class="customer-cell">
+              <div class="cust-avatar" style="background:${colorFor(t.name)}">${initials(t.name)}</div>
+              <div class="cust-name">${t.name}</div>
+            </div></td>
+            <td>${t.phone}</td>
+            <td>${t.specialization}</td>
+            <td>${t.area_pincode}</td>
+            <td>⭐ ${t.rating}</td>
+            <td>${t.total_jobs}</td>
+            <td><span class="badge ${t.is_available ? 'badge-Completed' : 'badge-Cancelled'}">${t.is_available ? 'Available' : 'Busy'}</span></td>
+          </tr>`).join('') : `<tr><td colspan="7" style="text-align:center;padding:2rem;color:var(--muted)">No technicians found — connect to API</td></tr>`}
+        </tbody>
+      </table></div>
+    </div>`;
+    }
+
+    // ─── CUSTOMERS SECTION ────────────────────
+    async function renderCustomers() {
+      document.getElementById('page-title').textContent = 'Customers';
+      const content = document.getElementById('main-content');
+      content.innerHTML = '<div style="text-align:center;padding:3rem;color:var(--muted)">Loading customers...</div>';
+      let customers = [];
+      try {
+        const res = await apiFetch('/customers');
+        customers = res.data.customers || [];
+      } catch { }
+
+      content.innerHTML = `
+    <div class="panel">
+      <div class="panel-header">
+        <div class="panel-title">All Customers</div>
+      </div>
+      <div class="table-wrap"><table>
+        <thead><tr>
+          <th>Name</th><th>Phone</th><th>Email</th><th>Pincode</th><th>Joined</th>
+        </tr></thead>
+        <tbody>
+          ${customers.length ? customers.map(c => `<tr>
+            <td><div class="customer-cell">
+              <div class="cust-avatar" style="background:${colorFor(c.name)}">${initials(c.name)}</div>
+              <div class="cust-name">${c.name}</div>
+            </div></td>
+            <td>${c.phone}</td>
+            <td>${c.email || '—'}</td>
+            <td>${c.pincode}</td>
+            <td style="font-size:0.75rem;color:var(--muted)">${c.created_at?.slice(0, 10) || '—'}</td>
+          </tr>`).join('') : `<tr><td colspan="5" style="text-align:center;padding:2rem;color:var(--muted)">No customers found — connect to API</td></tr>`}
+        </tbody>
+      </table></div>
+    </div>`;
+    }
+
+    // ─── BRANDS & MODELS SECTION ──────────────
+    async function renderBrands() {
+      document.getElementById('page-title').textContent = 'Brands & Models';
+      const content = document.getElementById('main-content');
+      content.innerHTML = '<div style="text-align:center;padding:3rem;color:var(--muted)">Loading brands...</div>';
+      
+      let brands = [];
+      let models = [];
+      try {
+        const [bRes, mRes] = await Promise.all([
+          apiFetch('/brands'),
+          apiFetch('/models')
+        ]);
+        brands = bRes.data || [];
+        models = mRes.data || [];
+      } catch (e) {
+        showToast('Error loading brands: ' + e.message);
+      }
+
+      content.innerHTML = `
+      <div style="display:grid; grid-template-columns: 1fr 2fr; gap: 1.5rem;">
+        
+        <!-- BRANDS PANEL -->
+        <div class="panel">
+          <div class="panel-header">
+            <div class="panel-title">Brands</div>
+          </div>
+          <div style="padding:1.25rem; border-bottom:1px solid var(--border);">
+             <div style="display:flex; gap:10px;">
+                <input type="text" id="new-brand-name" class="status-select" placeholder="New Brand Name" style="flex:1;">
+                <button class="btn-primary" onclick="addBrand()">Add</button>
+             </div>
+          </div>
+          <div class="table-wrap">
+            <table>
+              <thead><tr><th>Brand Name</th><th style="text-align:right">Action</th></tr></thead>
+              <tbody>
+                ${brands.map(b => `
+                  <tr>
+                    <td style="font-weight:600;">${b.name}</td>
+                    <td style="text-align:right;">
+                      <button class="btn-sm btn-cancel-sm" onclick="deleteBrand('${b.id}', '${b.name}')">Delete</button>
+                    </td>
+                  </tr>
+                `).join('')}
+                ${brands.length === 0 ? '<tr><td colspan="2" style="text-align:center;color:var(--muted)">No brands</td></tr>' : ''}
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        <!-- MODELS PANEL -->
+        <div class="panel">
+          <div class="panel-header">
+            <div class="panel-title">Device Models</div>
+          </div>
+          <div style="padding:1.25rem; border-bottom:1px solid var(--border);">
+             <div style="display:grid; grid-template-columns: 1fr 1fr 1.5fr auto; gap:10px;">
+                <select id="new-model-brand" class="status-select">
+                  <option value="">Select Brand...</option>
+                  ${brands.map(b => `<option value="${b.id}">${b.name}</option>`).join('')}
+                </select>
+                <select id="new-model-type" class="status-select">
+                  <option value="">Select Device Type...</option>
+                  <option value="Smartphone">Smartphone</option>
+                  <option value="Laptop">Laptop</option>
+                  <option value="LED TV">LED TV</option>
+                </select>
+                <input type="text" id="new-model-name" class="status-select" placeholder="Model Name (e.g. Galaxy S23)">
+                <button class="btn-primary" onclick="addModel()">Add</button>
+             </div>
+          </div>
+          <div class="table-wrap">
+            <table>
+              <thead><tr><th>Brand</th><th>Model Name</th><th>Device Type</th><th style="text-align:right">Action</th></tr></thead>
+              <tbody>
+                ${models.map(m => `
+                  <tr>
+                    <td style="font-weight:600;">${m.brand_name}</td>
+                    <td>${m.name}</td>
+                    <td><span class="badge badge-Completed">${m.device_type}</span></td>
+                    <td style="text-align:right;">
+                      <button class="btn-sm btn-cancel-sm" onclick="deleteModel('${m.id}', '${m.name}')">Delete</button>
+                    </td>
+                  </tr>
+                `).join('')}
+                ${models.length === 0 ? '<tr><td colspan="4" style="text-align:center;color:var(--muted)">No models</td></tr>' : ''}
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+      </div>
+      `;
+    }
+
+    async function addBrand() {
+      const name = document.getElementById('new-brand-name').value.trim();
+      if (!name) return;
+      try {
+        await apiFetch('/brands', { method: 'POST', body: JSON.stringify({ name }) });
+        showToast('Brand added successfully');
+        renderBrands();
+      } catch (e) {
+        showToast('Error: ' + e.message);
+      }
+    }
+
+    async function deleteBrand(id, name) {
+      showConfirm('Delete Brand', `Are you sure you want to delete the brand "${name}"? This will also delete all associated models.`, async () => {
+        try {
+          await apiFetch(`/brands/${id}`, { method: 'DELETE' });
+          showToast('Brand deleted');
+          renderBrands();
+        } catch (e) {
+          showToast('Error: ' + e.message);
+        }
+      });
+    }
+
+    async function addModel() {
+      const brand_id = document.getElementById('new-model-brand').value;
+      const device_type = document.getElementById('new-model-type').value;
+      const name = document.getElementById('new-model-name').value.trim();
+      if (!brand_id || !device_type || !name) {
+        showToast('Please fill all fields');
+        return;
+      }
+      try {
+        await apiFetch('/models', { method: 'POST', body: JSON.stringify({ brand_id, device_type, name }) });
+        showToast('Model added successfully');
+        renderBrands();
+      } catch (e) {
+        showToast('Error: ' + e.message);
+      }
+    }
+
+    async function deleteModel(id, name) {
+      showConfirm('Delete Model', `Are you sure you want to delete the model "${name}"?`, async () => {
+        try {
+          await apiFetch(`/models/${id}`, { method: 'DELETE' });
+          showToast('Model deleted');
+          renderBrands();
+        } catch (e) {
+          showToast('Error: ' + e.message);
+        }
+      });
+    }
+
+    // ─── SERVICES & PRICING SECTION ───────────
+    async function renderServices() {
+      document.getElementById('page-title').textContent = 'Services & Pricing';
+      const content = document.getElementById('main-content');
+      content.innerHTML = '<div style="text-align:center;padding:3rem;color:var(--muted)">Loading services...</div>';
+      
+      let services = [];
+      try {
+        const res = await apiFetch('/services?all=true');
+        services = res.data || [];
+      } catch (e) {
+        showToast('Error loading services: ' + e.message);
+      }
+
+      content.innerHTML = `
+      <div style="display:grid; grid-template-columns: 1fr; gap: 1.5rem;">
+        
+        <!-- ADD SERVICE PANEL -->
+        <div class="panel">
+          <div class="panel-header">
+            <div class="panel-title">Add New Service / Product</div>
+          </div>
+          <div style="padding:1.25rem;">
+             <div style="display:grid; grid-template-columns: 1.5fr 1.5fr 1.5fr 1fr auto; gap:12px; align-items: end;">
+                <div>
+                   <label style="font-size:0.75rem; font-weight:600; color:var(--muted); display:block; margin-bottom:4px;">Service Name</label>
+                   <input type="text" id="new-svc-name" class="status-select" placeholder="e.g. Screen Replacement">
+                </div>
+                <div>
+                   <label style="font-size:0.75rem; font-weight:600; color:var(--muted); display:block; margin-bottom:4px;">Device Type</label>
+                   <select id="new-svc-device" class="status-select">
+                      <option value="Smartphone">Smartphone</option>
+                      <option value="Laptop">Laptop</option>
+                      <option value="LED TV">LED TV</option>
+                   </select>
+                </div>
+                <div>
+                   <label style="font-size:0.75rem; font-weight:600; color:var(--muted); display:block; margin-bottom:4px;">Issue Type / Keyword</label>
+                   <input type="text" id="new-svc-issue" class="status-select" placeholder="e.g. Cracked Screen">
+                </div>
+                <div>
+                   <label style="font-size:0.75rem; font-weight:600; color:var(--muted); display:block; margin-bottom:4px;">Base Price (₹)</label>
+                   <input type="number" id="new-svc-price" class="status-select" placeholder="e.g. 1500" min="0">
+                </div>
+                <button class="btn-primary" onclick="addService()" style="height:38px;">Add Service</button>
+             </div>
+          </div>
+        </div>
+
+        <!-- SERVICES LIST PANEL -->
+        <div class="panel">
+          <div class="panel-header">
+            <div class="panel-title">Manage Services & Pricing</div>
+          </div>
+          <div class="table-wrap">
+            <table>
+              <thead>
+                <tr>
+                  <th>Device Type</th>
+                  <th>Service Name</th>
+                  <th>Issue Type / Desc</th>
+                  <th style="width: 150px;">Amount (₹)</th>
+                  <th>Status</th>
+                  <th style="text-align:right">Actions</th>
+                </tr>
+              </thead>
+              <tbody>
+                ${services.map(s => `
+                  <tr>
+                    <td><span class="badge badge-Completed">${s.device_type}</span></td>
+                    <td style="font-weight:600;">${s.name}</td>
+                    <td>${s.issue_type}</td>
+                    <td>
+                      <div style="display:flex; align-items:center; gap:4px;">
+                        <span style="color:var(--muted);">₹</span>
+                        <input type="number" id="svc-price-${s.id}" class="status-select" value="${s.base_price}" style="width:100px; padding:4px 8px; font-weight:bold; font-size:0.85rem;">
+                      </div>
+                    </td>
+                    <td>
+                      <select id="svc-active-${s.id}" class="status-select" style="width:90px; padding:4px; font-size:0.8rem;">
+                        <option value="true" ${s.is_active !== false ? 'selected' : ''}>Active</option>
+                        <option value="false" ${s.is_active === false ? 'selected' : ''}>Inactive</option>
+                      </select>
+                    </td>
+                    <td style="text-align:right;">
+                      <div class="action-btns" style="justify-content: flex-end;">
+                        <button class="btn-sm btn-view" onclick="saveService('${s.id}')">Save</button>
+                        <button class="btn-sm btn-cancel-sm" onclick="deleteService('${s.id}', '${s.name}')">Delete</button>
+                      </div>
+                    </td>
+                  </tr>
+                `).join('')}
+                ${services.length === 0 ? '<tr><td colspan="6" style="text-align:center;color:var(--muted);padding:2rem;">No services found</td></tr>' : ''}
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+      </div>
+      `;
+    }
+
+    async function addService() {
+      const name = document.getElementById('new-svc-name').value.trim();
+      const device_type = document.getElementById('new-svc-device').value;
+      const issue_type = document.getElementById('new-svc-issue').value.trim();
+      const base_price = document.getElementById('new-svc-price').value.trim();
+
+      if (!name || !device_type || !issue_type || !base_price) {
+        showToast('❌ Please fill all required fields');
+        return;
+      }
+
+      try {
+        await apiFetch('/services', {
+          method: 'POST',
+          body: JSON.stringify({
+            name,
+            device_type,
+            issue_type,
+            base_price: parseFloat(base_price),
+            duration_mins: 60
+          })
+        });
+        showToast('✅ Service added successfully');
+        renderServices();
+      } catch (e) {
+        showToast('❌ Error: ' + e.message);
+      }
+    }
+
+    async function saveService(id) {
+      const base_price = document.getElementById(`svc-price-${id}`).value;
+      const is_active = document.getElementById(`svc-active-${id}`).value === 'true';
+
+      if (!base_price || isNaN(base_price)) {
+        showToast('❌ Please enter a valid price');
+        return;
+      }
+
+      try {
+        await apiFetch(`/services/${id}`, {
+          method: 'PATCH',
+          body: JSON.stringify({
+            base_price: parseFloat(base_price),
+            is_active: is_active
+          })
+        });
+        showToast('✅ Service updated successfully');
+      } catch (e) {
+        showToast('❌ Error: ' + e.message);
+      }
+    }
+
+    async function deleteService(id, name) {
+      showConfirm('Delete Service', `Are you sure you want to delete the service "${name}"?`, async () => {
+        try {
+          await apiFetch(`/services/${id}`, { method: 'DELETE' });
+          showToast('🗑️ Service deleted');
+          renderServices();
+        } catch (e) {
+          showToast('❌ Error: ' + e.message);
+        }
+      });
+    }
+
+    // ─── SECTION ROUTER ───────────────────────
+    function loadSection(section, el) {
+      currentSection = section;
+      document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+      if (el) el.classList.add('active');
+      currentPage = 1;
+      if (section === 'dashboard') renderDashboard();
+      if (section === 'bookings') { renderDashboard(); }
+      if (section === 'technicians') renderTechnicians();
+      if (section === 'customers') renderCustomers();
+      if (section === 'brands') renderBrands();
+      if (section === 'services') renderServices();
+    }
+
+    function refreshData() { loadSection(currentSection, null); }
+
+    // ─── HELPERS ──────────────────────────────
+    function skeletonRows(n) {
+      return Array(n).fill('').map(() => `<tr class="skeleton-row">
+    <td><div class="skeleton" style="height:14px;width:110px"></div></td>
+    <td><div class="skeleton" style="height:14px;width:130px"></div></td>
+    <td><div class="skeleton" style="height:14px;width:100px"></div></td>
+    <td><div class="skeleton" style="height:14px;width:80px"></div></td>
+    <td><div class="skeleton" style="height:14px;width:90px"></div></td>
+    <td><div class="skeleton" style="height:14px;width:60px"></div></td>
+    <td><div class="skeleton" style="height:20px;width:80px;border-radius:20px"></div></td>
+    <td><div class="skeleton" style="height:24px;width:60px;border-radius:6px"></div></td>
+  </tr>`).join('');
+    }
+
+    function buildDailyChart(daily) {
+      if (!daily?.length) return '<div style="color:var(--muted);font-size:0.8rem">No data</div>';
+      const max = Math.max(...daily.map(d => d.count), 1);
+      return daily.map(d => `
+    <div class="chart-bar-col">
+      <div class="chart-bar" style="height:${Math.round((d.count / max) * 76)}px" title="${d.count} bookings"></div>
+      <div class="chart-label">${new Date(d.date + 'T00:00:00').toLocaleDateString('en', { weekday: 'short' })}</div>
+    </div>`).join('');
+    }
+
+    function buildTechList(techs) {
+      if (!techs?.length) return '<div style="color:var(--muted);font-size:0.8rem;padding:0.5rem">No data — connect API</div>';
+      return techs.map(t => `
+    <div class="tech-row">
+      <div class="tech-av" style="background:${colorFor(t.name)}">${initials(t.name)}</div>
+      <div class="tech-info"><div class="tech-name">${t.name}</div><div class="tech-spec">${t.specialization}</div></div>
+      <div><div class="tech-jobs-num">${t.total_jobs}</div><div class="tech-jobs-lbl">jobs</div></div>
+    </div>`).join('');
+    }
+
+    function exportCSV() {
+      const rows = [['Booking Ref', 'Customer', 'Phone', 'Device', 'Service', 'Date', 'Slot', 'Amount', 'Status']];
+      bookingsCache.forEach(b => rows.push([
+        b.booking_ref,
+        b.customer?.name || '', b.customer?.phone || '',
+        b.service?.device_type || '', b.service?.name || '',
+        b.preferred_date || '', b.time_slot || '',
+        b.estimated_price || '', b.status
+      ]));
+      const csv = rows.map(r => r.map(c => `"${c}"`).join(',')).join('\n');
+      const a = document.createElement('a');
+      a.href = 'data:text/csv;charset=utf-8,' + encodeURIComponent(csv);
+      a.download = `tekzivo-bookings-${new Date().toISOString().slice(0, 10)}.csv`;
+      a.click();
+      showToast('📄 CSV exported!');
+    }
+
+    function getDemoData() {
+      return [
+        { id: 'd1', booking_ref: 'TKZ-2024-00001', customer: { name: 'Priya Ramesh', phone: '+91 98765 43210' }, service: { name: 'Screen Replacement', device_type: 'Smartphone' }, preferred_date: '2024-04-18', time_slot: '10 AM – 12 PM', estimated_price: 1800, status: 'Pending', pincode: '600001', issue_description: 'Cracked screen', booked_at: '2024-04-17T10:00:00' },
+        { id: 'd2', booking_ref: 'TKZ-2024-00002', customer: { name: 'Arjun Kumar', phone: '+91 87654 32109' }, service: { name: 'AC Service', device_type: 'Air Conditioner' }, preferred_date: '2024-04-18', time_slot: '12 PM – 2 PM', estimated_price: 999, status: 'Confirmed', pincode: '560001', issue_description: 'Not cooling', booked_at: '2024-04-17T11:00:00' },
+        { id: 'd3', booking_ref: 'TKZ-2024-00003', customer: { name: 'Sneha Mehta', phone: '+91 76543 21098' }, service: { name: 'Laptop Repair', device_type: 'Laptop' }, preferred_date: '2024-04-17', time_slot: '2 PM – 4 PM', estimated_price: 2500, status: 'Completed', pincode: '400001', issue_description: 'Not turning on', booked_at: '2024-04-16T09:00:00' },
+        { id: 'd4', booking_ref: 'TKZ-2024-00004', customer: { name: 'Rahul Singh', phone: '+91 65432 10987' }, service: { name: 'TV Repair', device_type: 'LED TV' }, preferred_date: '2024-04-17', time_slot: '10 AM – 12 PM', estimated_price: 1500, status: 'In Progress', pincode: '600001', issue_description: 'No display', booked_at: '2024-04-16T08:00:00' },
+        { id: 'd5', booking_ref: 'TKZ-2024-00005', customer: { name: 'Divya Nair', phone: '+91 54321 09876' }, service: { name: 'Fridge Repair', device_type: 'Refrigerator' }, preferred_date: '2024-04-16', time_slot: '4 PM – 6 PM', estimated_price: 1200, status: 'Completed', pincode: '682001', issue_description: 'Not cooling', booked_at: '2024-04-15T14:00:00' },
+        { id: 'd6', booking_ref: 'TKZ-2024-00006', customer: { name: 'Karthik R', phone: '+91 43210 98765' }, service: { name: 'Battery Replacement', device_type: 'Smartphone' }, preferred_date: '2024-04-16', time_slot: '12 PM – 2 PM', estimated_price: 799, status: 'Cancelled', pincode: '600002', issue_description: 'Battery draining', booked_at: '2024-04-15T10:00:00' },
+        { id: 'd7', booking_ref: 'TKZ-2024-00007', customer: { name: 'Meena S', phone: '+91 32109 87654' }, service: { name: 'WM Repair', device_type: 'Washing Machine' }, preferred_date: '2024-04-15', time_slot: '10 AM – 12 PM', estimated_price: 1100, status: 'Completed', pincode: '600003', issue_description: 'Not draining', booked_at: '2024-04-14T09:00:00' },
+        { id: 'd8', booking_ref: 'TKZ-2024-00008', customer: { name: 'Suresh P', phone: '+91 21098 76543' }, service: { name: 'Keyboard Repair', device_type: 'Laptop' }, preferred_date: '2024-04-15', time_slot: '2 PM – 4 PM', estimated_price: 1350, status: 'Pending', pincode: '560002', issue_description: 'Keys not working', booked_at: '2024-04-14T11:00:00' },
+      ];
+    }
+
+    function showToast(msg) {
+      const t = document.getElementById('toast');
+      t.textContent = msg; t.classList.add('show');
+      setTimeout(() => t.classList.remove('show'), 3000);
+    }
+
+    function showConfirm(title, message, onYes, onNo) {
+      let overlay = document.querySelector('.confirm-overlay');
+      if (!overlay) {
+        overlay = document.createElement('div');
+        overlay.className = 'confirm-overlay';
+        overlay.innerHTML = `
+          <div class="confirm-box">
+            <div class="confirm-title" id="conf-title">Confirm Action</div>
+            <div class="confirm-message" id="conf-msg">Are you sure?</div>
+            <div class="confirm-actions">
+              <button class="btn-confirm-no" id="conf-btn-no">Cancel</button>
+              <button class="btn-confirm-yes" id="conf-btn-yes">Yes, Proceed</button>
+            </div>
+          </div>
+        `;
+        document.body.appendChild(overlay);
+      }
+      
+      document.getElementById('conf-title').textContent = title;
+      document.getElementById('conf-msg').textContent = message;
+      overlay.classList.add('active');
+
+      const btnYes = document.getElementById('conf-btn-yes');
+      const btnNo = document.getElementById('conf-btn-no');
+
+      const newYes = btnYes.cloneNode(true);
+      const newNo = btnNo.cloneNode(true);
+      btnYes.parentNode.replaceChild(newYes, btnYes);
+      btnNo.parentNode.replaceChild(newNo, btnNo);
+
+      newYes.addEventListener('click', () => {
+        overlay.classList.remove('active');
+        if (onYes) onYes();
+      });
+
+      newNo.addEventListener('click', () => {
+        overlay.classList.remove('active');
+        if (onNo) onNo();
+      });
+    }
+
+    function updateTimestamp() {
+      const el = document.getElementById('last-updated');
+      if (el) el.textContent = 'Updated ' + new Date().toLocaleTimeString('en-IN');
+    }
+
+    document.getElementById('booking-modal').addEventListener('click', function (e) {
+      if (e.target === this) closeModal();
+    });
+
+    // ─── INIT ─────────────────────────────────
+    (async function () {
+      await checkApiHealth();
+      renderDashboard();
+      // Auto-refresh every 60 seconds
+      setInterval(() => {
+        checkApiHealth();
+        if (currentSection === 'dashboard') loadBookings();
+      }, 60000);
+    })();
+  </script>
+</body>
+
+</html>
