@@ -13,10 +13,12 @@
         <div class="container">
             <div>
                 <a href="#">Customer Service</a> | 
-                <a href="#">Track Order Status</a> | 
-                <a href="#">Terms & Conditions</a>
+                <span id="biz-header-contact" style="color:var(--text-muted); font-size:11px; margin-left:5px;">
+                    📞 Support: <span id="biz-phone">+91 98765 43210</span> | ✉️ <span id="biz-email">support@tekzivo.com</span>
+                </span>
             </div>
             <div>
+                <span id="biz-hours" style="color:var(--text-muted); font-size:11px; margin-right:15px; display:none;">Hours: 09:00 AM - 07:00 PM</span>
                 <a href="#">My Account</a> | 
                 <a href="#">Orders</a> | 
                 <a href="#">Sign in</a>
@@ -27,10 +29,10 @@
     <!-- Header -->
     <header class="header-main">
         <div class="container">
-            <a href="#" class="logo">Tek<span>zivo</span></a>
+            <a href="#" class="logo" id="logo-brand">Tek<span>zivo</span></a>
             
             <div class="search-bar">
-                <input type="text" placeholder="Search for spare parts, repair services, tools..." id="search-input">
+                <input type="text" placeholder="Search for spare parts, repair services, tools..." id="search-input" onkeydown="if(event.key === 'Enter') searchProducts()">
                 <button type="button" onclick="searchProducts()">SEARCH</button>
             </div>
 
@@ -47,10 +49,10 @@
     <nav class="main-nav">
         <div class="container">
             <ul>
-                <li><a href="#" onclick="showCategory('All')">Home</a></li>
-                <li><a href="#" onclick="showCategory('Smartphone')">Smartphones</a></li>
-                <li><a href="#" onclick="showCategory('Laptop')">Laptops</a></li>
-                <li><a href="#" onclick="showCategory('LED TV')">LED TVs</a></li>
+                <li><a href="#" class="active" onclick="showCategory('All', this)">Home</a></li>
+                <li><a href="#" onclick="showCategory('Smartphone', this)">Smartphones</a></li>
+                <li><a href="#" onclick="showCategory('Laptop', this)">Laptops</a></li>
+                <li><a href="#" onclick="showCategory('LED TV', this)">LED TVs</a></li>
             </ul>
         </div>
     </nav>
@@ -63,9 +65,9 @@
             <div class="category-menu">
                 <h3>Categories</h3>
                 <ul>
-                    <li><a href="#" onclick="showCategory('Smartphone')">Mobile Repair Services</a></li>
-                    <li><a href="#" onclick="showCategory('Laptop')">Laptop Repair Services</a></li>
-                    <li><a href="#" onclick="showCategory('LED TV')">TV Repair Services</a></li>
+                    <li><a href="#" onclick="showCategory('Smartphone', this)">Mobile Repair Services</a></li>
+                    <li><a href="#" onclick="showCategory('Laptop', this)">Laptop Repair Services</a></li>
+                    <li><a href="#" onclick="showCategory('LED TV', this)">TV Repair Services</a></li>
                     <li><a href="#">Spare Parts (Coming Soon)</a></li>
                     <li><a href="#">Repair Tools (Coming Soon)</a></li>
                     <li><a href="#">Accessories (Coming Soon)</a></li>
@@ -78,7 +80,13 @@
         <main class="main-content">
             <div class="banner">
                 <h2>Premium Doorstep Repair Service</h2>
-                <p>Expert Technicians. Genuine Parts. Affordable Prices.</p>
+                <p>Get expert repair solutions for your devices with quick turnaround times and fully certified technicians right at your doorstep.</p>
+                <div class="banner-badges">
+                    <div class="banner-badge">⚡ 2hr Doorstep Service</div>
+                    <div class="banner-badge">🛡️ 90-Day Warranty</div>
+                    <div class="banner-badge">👨‍🔧 Certified Technicians</div>
+                    <div class="banner-badge">💎 100% Genuine Spares</div>
+                </div>
             </div>
 
             <!-- Dynamic Grids will be injected here -->
@@ -117,12 +125,16 @@
                         <li><a href="#">Warranty T&C</a></li>
                     </ul>
                 </div>
-                <div>
-                    <h4>Stay Connected</h4>
-                    <p>Follow us on social media for updates and offers.</p>
+                <div id="footer-contact-block">
+                    <h4 id="footer-biz-name">Tekzivo Electronics Care</h4>
+                    <p style="font-size: 12px; line-height: 1.6; margin-bottom: 8px;">
+                        📞 Support: <span id="footer-phone">+91 98765 43210</span><br>
+                        ✉️ Email: <span id="footer-email">support@tekzivo.com</span><br>
+                        🕒 Hours: <span id="footer-hours">09:00 AM - 07:00 PM</span>
+                    </p>
                 </div>
             </div>
-            <div class="footer-bottom">
+            <div class="footer-bottom" id="footer-copyright">
                 &copy; 2026 Tekzivo.com. All rights reserved. (Inspired by Maxbhi layout)
             </div>
         </div>
@@ -207,18 +219,21 @@
             <!-- Success Content -->
             <div class="modal-body success-msg" id="modal-success-content" style="display: none;">
                 <div class="success-icon">✓</div>
-                <h2 style="margin-bottom: 10px;">Booking Confirmed!</h2>
-                <p>Our technician will arrive as scheduled.</p>
-                <div class="ref-code" id="success-ref">TKZ-00000</div>
-                <p style="font-size: 12px; color: #777;">Please save this reference number.</p>
-                <button class="btn-submit" onclick="closeModal()" style="margin-top: 20px;">Continue Shopping</button>
+                <h2 style="margin-bottom: 12px; font-family: var(--font-title); font-weight: 700;">Booking Confirmed!</h2>
+                <p style="color: var(--text-muted); margin-bottom: 15px;">Our certified technician will arrive as scheduled.</p>
+                <div class="ref-code-container">
+                    <div class="ref-code" id="success-ref">TKZ-00000</div>
+                    <button class="btn-copy" onclick="copyRefCode()" title="Copy Reference Code">📋</button>
+                </div>
+                <p style="font-size: 12.5px; color: var(--text-muted);">Please save this reference number for booking updates.</p>
+                <button class="btn-submit" onclick="closeModal()" style="margin-top: 25px;">Continue Shopping</button>
             </div>
 
         </div>
     </div>
 
     <script>
-        const API_BASE = 'http://localhost:5000/api';
+        const API_BASE = localStorage.getItem('TEKZIVO_API_BASE') || 'http://localhost:5000/api';
         
         const DEVICE_ISSUES = {
             'Smartphone': {
@@ -302,8 +317,72 @@
             renderProducts();
         }
         
+        let activeSettings = {
+            business_name: "Tekzivo Electronics Care",
+            business_hours: "09:00 AM - 07:00 PM",
+            support_phone: "+91 98765 43210",
+            support_email: "support@tekzivo.com"
+        };
+
+        async function fetchSettings() {
+            try {
+                const res = await fetch(`${API_BASE}/settings`).then(r => r.json());
+                if (res && res.success && res.data) {
+                    activeSettings = res.data;
+                }
+            } catch (e) {
+                console.error("Failed to load settings from server, using default settings", e);
+            }
+            applySettingsToUI();
+        }
+
+        function applySettingsToUI() {
+            // Update document title
+            if (activeSettings.business_name) {
+                document.title = `${activeSettings.business_name} - Doorstep Repair Services`;
+            }
+            
+            // Update logo brand text if needed
+            const logoBrand = document.getElementById('logo-brand');
+            if (logoBrand && activeSettings.business_name) {
+                const parts = activeSettings.business_name.split(' ');
+                if (parts.length > 1) {
+                    logoBrand.innerHTML = `${parts[0]}<span>${parts.slice(1).join(' ')}</span>`;
+                } else {
+                    logoBrand.innerHTML = `${activeSettings.business_name}`;
+                }
+            }
+
+            // Update top bar contact elements
+            const topPhone = document.getElementById('biz-phone');
+            if (topPhone) topPhone.textContent = activeSettings.support_phone || '';
+            const topEmail = document.getElementById('biz-email');
+            if (topEmail) topEmail.textContent = activeSettings.support_email || '';
+            const topHours = document.getElementById('biz-hours');
+            if (topHours) {
+                topHours.textContent = `Hours: ${activeSettings.business_hours || ''}`;
+                topHours.style.display = 'inline';
+            }
+            
+            // Update footer elements
+            const footerBizName = document.getElementById('footer-biz-name');
+            if (footerBizName) footerBizName.textContent = activeSettings.business_name || '';
+            const footerPhone = document.getElementById('footer-phone');
+            if (footerPhone) footerPhone.textContent = activeSettings.support_phone || '';
+            const footerEmail = document.getElementById('footer-email');
+            if (footerEmail) footerEmail.textContent = activeSettings.support_email || '';
+            const footerHours = document.getElementById('footer-hours');
+            if (footerHours) footerHours.textContent = activeSettings.business_hours || '';
+            
+            const copyright = document.getElementById('footer-copyright');
+            if (copyright && activeSettings.business_name) {
+                copyright.innerHTML = `&copy; 2026 ${activeSettings.business_name}. All rights reserved. (Inspired by Maxbhi layout)`;
+            }
+        }
+
         // Load data on start
         (async function() {
+            await fetchSettings();
             await fetchBrandsAndModels();
             await fetchServices();
         })();
@@ -320,7 +399,17 @@
             const container = document.getElementById('product-sections');
             container.innerHTML = '';
 
-            for (const [deviceType, issues] of Object.entries(DEVICE_ISSUES)) {
+            // Enforce strict category order: Smartphone, Laptop, LED TV
+            const orderedDeviceTypes = ['Smartphone', 'Laptop', 'LED TV'];
+            for (const key of Object.keys(DEVICE_ISSUES)) {
+                if (!orderedDeviceTypes.includes(key)) {
+                    orderedDeviceTypes.push(key);
+                }
+            }
+
+            for (const deviceType of orderedDeviceTypes) {
+                const issues = DEVICE_ISSUES[deviceType];
+                if (!issues || Object.keys(issues).length === 0) continue;
                 if (categoryFilter !== 'All' && deviceType !== categoryFilter) continue;
 
                 const section = document.createElement('div');
@@ -351,8 +440,31 @@
             }
         }
 
-        function showCategory(category) {
+        function showCategory(category, element) {
             renderProducts(category);
+            
+            // Remove active classes from all navigation links
+            document.querySelectorAll('.main-nav li a, .category-menu li a').forEach(el => {
+                el.classList.remove('active');
+            });
+            
+            if (element) {
+                element.classList.add('active');
+            } else {
+                // Try matching based on category text
+                document.querySelectorAll('.main-nav li a, .category-menu li a').forEach(el => {
+                    const txt = el.textContent.toLowerCase();
+                    if (category === 'All' && txt.includes('home')) {
+                        el.classList.add('active');
+                    } else if (category === 'Smartphone' && (txt.includes('smartphone') || txt.includes('mobile'))) {
+                        el.classList.add('active');
+                    } else if (category === 'Laptop' && txt.includes('laptop')) {
+                        el.classList.add('active');
+                    } else if (category === 'LED TV' && (txt.includes('led') || txt.includes('tv'))) {
+                        el.classList.add('active');
+                    }
+                });
+            }
         }
 
         function searchProducts() {
@@ -414,7 +526,7 @@
             document.getElementById('f-model').disabled = true;
 
             const validBrands = new Set(allModels.filter(m => m.device_type === device).map(m => m.brand_id));
-            
+
             allBrands.forEach(b => {
                 if (validBrands.has(b.id)) {
                     const opt = document.createElement('option');
@@ -475,16 +587,18 @@
             const msg = document.getElementById('pincode-msg');
             if (pin.length < 6) { msg.innerText = ''; return; }
 
+            msg.innerHTML = `<span style="color: var(--primary-light); font-weight: 500; display: inline-flex; align-items: center; gap: 6px;"><span class="spinner" style="display:inline-block; width:10px; height:10px; border:2px solid var(--primary-light); border-top-color:transparent; border-radius:50%; animation: spin 0.8s linear infinite;"></span> Checking coverage...</span>`;
+
             try {
                 const res = await fetch(`${API_BASE}/check-pincode/${pin}`);
                 const json = await res.json();
                 if (json.data?.covered) {
-                    msg.innerHTML = `<span style="color: green;">✓ Delivery / Service available in ${json.data.city}</span>`;
+                    msg.innerHTML = `<span style="color: var(--success); font-weight: 600; display: inline-flex; align-items: center; gap: 4px;">✓ Service available in ${json.data.city}</span>`;
                 } else {
-                    msg.innerHTML = `<span style="color: red;">✗ Sorry, not serviceable yet</span>`;
+                    msg.innerHTML = `<span style="color: var(--danger); font-weight: 600; display: inline-flex; align-items: center; gap: 4px;">✗ Sorry, not serviceable yet</span>`;
                 }
             } catch (e) {
-                msg.innerHTML = `<span style="color: blue;">Checking coverage...</span>`;
+                msg.innerHTML = `<span style="color: var(--danger); font-weight: 600;">✗ Service availability check failed</span>`;
             }
         }
 
@@ -587,6 +701,15 @@
                 btn.disabled = false;
                 btn.innerText = 'CONFIRM BOOKING';
             }
+        }
+
+        function copyRefCode() {
+            const refText = document.getElementById('success-ref').innerText;
+            navigator.clipboard.writeText(refText).then(() => {
+                showToast('📋 Reference code copied to clipboard!');
+            }).catch(err => {
+                showToast('❌ Failed to copy reference code');
+            });
         }
     </script>
 </body>

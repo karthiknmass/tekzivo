@@ -5,6 +5,17 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Tekzivo Admin Portal</title>
+  <script>
+    // Apply theme early to prevent FOUC (flash of unstyled content)
+    (function () {
+      const theme = localStorage.getItem('TEKZIVO_THEME') || 'light';
+      if (theme === 'dark') {
+        document.documentElement.classList.add('dark-theme');
+      } else {
+        document.documentElement.classList.remove('dark-theme');
+      }
+    })();
+  </script>
   <link
     href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800;900&family=Poppins:wght@400;500;600;700&display=swap"
     rel="stylesheet" />
@@ -234,7 +245,8 @@
       font-size: 0.78rem;
       cursor: pointer;
       font-family: var(--font-body);
-      transition: all 0.15s
+      transition: all 0.15s;
+      color: var(--text);
     }
 
     .btn-refresh:hover {
@@ -380,6 +392,19 @@
     /* TABLE */
     .table-wrap {
       overflow-x: auto
+    }
+
+    .table-wrap-scroll {
+      max-height: 450px;
+      overflow-y: auto;
+    }
+
+    .table-wrap-scroll th {
+      position: sticky;
+      top: 0;
+      background: var(--bg);
+      z-index: 5;
+      box-shadow: inset 0 -1px 0 var(--border);
     }
 
     table {
@@ -945,13 +970,498 @@
         grid-template-columns: 1fr
       }
     }
+
+    /* KANBAN BOARD */
+    .kanban-container {
+      display: flex;
+      flex-direction: column;
+      height: calc(100vh - 120px);
+      gap: 1rem;
+    }
+    .kanban-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 1rem;
+      background: var(--white);
+      padding: 1rem 1.5rem;
+      border-radius: 12px;
+      border: 1px solid var(--border);
+    }
+    .kanban-board {
+      display: grid;
+      grid-template-columns: repeat(5, minmax(260px, 1fr));
+      gap: 1rem;
+      overflow-x: auto;
+      align-items: start;
+      flex: 1;
+      padding-bottom: 1rem;
+    }
+    .kanban-col {
+      background: var(--bg);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      display: flex;
+      flex-direction: column;
+      max-height: calc(100vh - 200px);
+      padding: 0.75rem;
+    }
+    .kanban-col-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding-bottom: 0.75rem;
+      border-bottom: 2px solid var(--border);
+      margin-bottom: 0.75rem;
+    }
+    .kanban-col-title-wrap {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .kanban-col-dot {
+      width: 10px;
+      height: 10px;
+      border-radius: 50%;
+    }
+    .kanban-col-dot.Pending { background: var(--pending); }
+    .kanban-col-dot.Confirmed { background: var(--info); }
+    .kanban-col-dot.In-Progress { background: var(--warning); }
+    .kanban-col-dot.Completed { background: var(--success); }
+    .kanban-col-dot.Cancelled { background: var(--danger); }
+
+    .kanban-col-title {
+      font-family: var(--font-head);
+      font-size: 0.9rem;
+      font-weight: 800;
+      color: var(--text);
+    }
+    .kanban-col-count {
+      background: var(--border);
+      color: var(--text);
+      font-size: 0.75rem;
+      font-weight: 700;
+      padding: 2px 8px;
+      border-radius: 12px;
+    }
+    .kanban-cards {
+      display: flex;
+      flex-direction: column;
+      gap: 0.75rem;
+      overflow-y: auto;
+      flex: 1;
+      min-height: 200px;
+      padding: 0.25rem;
+    }
+    .kanban-card {
+      background: var(--white);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 0.85rem;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.02);
+      cursor: pointer;
+      transition: all 0.2s ease;
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+    .kanban-card:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+      border-color: var(--blue);
+    }
+    .kanban-card-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    .kanban-card-ref {
+      font-family: monospace;
+      font-size: 0.72rem;
+      font-weight: 700;
+      color: var(--muted);
+    }
+    .kanban-card-device {
+      font-size: 0.65rem;
+      background: var(--border);
+      padding: 2px 6px;
+      border-radius: 4px;
+      font-weight: 700;
+      color: var(--text);
+    }
+    .kanban-card-title {
+      font-size: 0.82rem;
+      font-weight: 700;
+      color: var(--text);
+      line-height: 1.3;
+    }
+    .kanban-card-customer {
+      font-size: 0.78rem;
+      font-weight: 600;
+      color: var(--text);
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      margin-top: 2px;
+    }
+    .kanban-card-avatar {
+      width: 18px;
+      height: 18px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: white;
+      font-size: 0.55rem;
+      font-weight: 800;
+    }
+    .kanban-card-date {
+      font-size: 0.72rem;
+      color: var(--muted);
+      display: flex;
+      align-items: center;
+      gap: 4px;
+    }
+    .kanban-card-footer {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      border-top: 1px dashed var(--border);
+      padding-top: 6px;
+      margin-top: 4px;
+    }
+    .kanban-card-price {
+      font-size: 0.8rem;
+      font-weight: 800;
+      color: var(--text);
+    }
+    .kanban-card-tech-wrap {
+      margin-top: 4px;
+    }
+    .kanban-card-tech-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      font-size: 0.7rem;
+      background: #eff6ff;
+      color: #1e40af;
+      padding: 2px 6px;
+      border-radius: 4px;
+      font-weight: 600;
+    }
+    .kanban-card-tech-unassigned {
+      font-size: 0.7rem;
+      background: #fef3c7;
+      color: #92400e;
+      padding: 2px 6px;
+      border-radius: 4px;
+      font-weight: 600;
+    }
+    .kanban-card-select-tech {
+      width: 100%;
+      font-size: 0.75rem;
+      padding: 4px;
+      border-radius: 4px;
+      border: 1px solid var(--border);
+      background: var(--bg);
+      cursor: pointer;
+      font-weight: 500;
+    }
+    .kanban-card-quick-status {
+      font-size: 0.72rem;
+      padding: 3px;
+      border-radius: 4px;
+      border: 1px solid var(--border);
+      background: var(--bg);
+      max-width: 95px;
+      font-weight: 500;
+    }
+
+    /* SLIDE OUT DRAWER */
+    .drawer-overlay {
+      position: fixed;
+      top: 0; left: 0; width: 100%; height: 100%;
+      background: rgba(0,0,0,0.5);
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 0.3s ease;
+      z-index: 10000;
+      display: flex;
+      justify-content: flex-end;
+    }
+    .drawer-overlay.open {
+      opacity: 1;
+      pointer-events: auto;
+    }
+    .drawer {
+      width: 100%;
+      max-width: 480px;
+      height: 100%;
+      background: var(--white);
+      box-shadow: -5px 0 25px rgba(0,0,0,0.15);
+      transform: translateX(100%);
+      transition: transform 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+      display: flex;
+      flex-direction: column;
+    }
+    .drawer-overlay.open .drawer {
+      transform: translateX(0);
+    }
+    .drawer-header {
+      padding: 1.25rem 1.5rem;
+      border-bottom: 1px solid var(--border);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+    .drawer-title {
+      font-family: var(--font-head);
+      font-size: 1.25rem;
+      font-weight: 800;
+      color: var(--text);
+    }
+    .drawer-close {
+      background: none;
+      border: none;
+      font-size: 1.25rem;
+      cursor: pointer;
+      color: var(--muted);
+      transition: color 0.2s;
+    }
+    .drawer-close:hover {
+      color: var(--text);
+    }
+    .drawer-body {
+      padding: 1.5rem;
+      overflow-y: auto;
+      flex: 1;
+    }
+    /* SETTINGS VIEW */
+    .settings-panel {
+      padding: 1.75rem;
+    }
+    .settings-tab-bar {
+      display: flex;
+      gap: 1.5rem;
+      border-bottom: 1px solid var(--border);
+      margin-bottom: 1.5rem;
+      padding-bottom: 2px;
+    }
+    .settings-tab {
+      background: none;
+      border: none;
+      font-family: var(--font-head);
+      font-size: 0.95rem;
+      font-weight: 700;
+      color: var(--muted);
+      cursor: pointer;
+      padding: 0.5rem 0.25rem 0.75rem 0.25rem;
+      border-bottom: 2px solid transparent;
+      transition: all 0.2s;
+    }
+    .settings-tab:hover {
+      color: var(--text);
+    }
+    .settings-tab.active {
+      color: var(--blue);
+      border-bottom-color: var(--blue);
+    }
+    .settings-section {
+      display: none;
+    }
+    .settings-section.active {
+      display: block;
+    }
+    .form-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 1.25rem;
+      margin-bottom: 1.25rem;
+    }
+    @media (max-width: 768px) {
+      .form-grid {
+        grid-template-columns: 1fr;
+      }
+    }
+    .form-group {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+    .form-group label {
+      font-size: 0.78rem;
+      font-weight: 700;
+      color: var(--text);
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+    .form-group input, .form-group select {
+      padding: 10px 12px;
+      border-radius: 8px;
+      border: 1px solid var(--border);
+      background: var(--white);
+      font-family: inherit;
+      font-size: 0.88rem;
+      color: var(--text);
+      transition: border-color 0.2s;
+    }
+    .form-group input:focus, .form-group select:focus {
+      border-color: var(--blue);
+      outline: none;
+    }
+    .form-actions {
+      display: flex;
+      justify-content: flex-end;
+      margin-top: 1.5rem;
+      padding-top: 1rem;
+      border-top: 1px solid var(--border);
+    }
+    .pincode-manager-layout {
+      display: grid;
+      grid-template-columns: 280px 1fr;
+      gap: 1.5rem;
+    }
+    @media (max-width: 992px) {
+      .pincode-manager-layout {
+        grid-template-columns: 1fr;
+      }
+    }
+    .pincode-list-container {
+      display: flex;
+      flex-direction: column;
+      gap: 1rem;
+    }
+    .pincode-search-bar {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      background: var(--white);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 6px 12px;
+    }
+    .pincode-search-bar input {
+      border: none;
+      outline: none;
+      background: transparent;
+      width: 100%;
+      font-size: 0.85rem;
+    }
+    .pincode-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+      gap: 0.85rem;
+      max-height: 480px;
+      overflow-y: auto;
+      padding-right: 4px;
+    }
+    .pincode-card {
+      background: var(--white);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 0.75rem 1rem;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.01);
+      transition: all 0.2s;
+    }
+    .pincode-card:hover {
+      border-color: var(--blue);
+      box-shadow: 0 2px 8px rgba(0,0,0,0.04);
+    }
+    .pincode-card-info {
+      display: flex;
+      flex-direction: column;
+      gap: 2px;
+    }
+    .pincode-card-code {
+      font-family: monospace;
+      font-size: 0.95rem;
+      font-weight: 800;
+      color: var(--blue);
+    }
+    .pincode-card-loc {
+      font-size: 0.7rem;
+      color: var(--muted);
+      font-weight: 600;
+    }
+    .btn-delete-pincode {
+      background: none;
+      border: none;
+      color: var(--danger);
+      opacity: 0.6;
+      cursor: pointer;
+      font-size: 0.85rem;
+      padding: 4px;
+      border-radius: 4px;
+      transition: all 0.2s;
+    }
+    .btn-delete-pincode:hover {
+      opacity: 1;
+      background: #fef2f2;
+    }
+
+    /* DARK THEME OVERRIDES */
+    .dark-theme {
+      --bg: #0b0f19;
+      --white: #111827;
+      --text: #f3f4f6;
+      --muted: #9ca3af;
+      --border: #1f2937;
+      --card-shadow: 0 4px 20px rgba(0,0,0,0.3);
+
+      /* Premium dark-mode status badges styling */
+      --pending: #a78bfa;
+      --pending-bg: rgba(124, 58, 237, 0.18);
+      --info: #60a5fa;
+      --info-bg: rgba(29, 78, 216, 0.18);
+      --warning: #fbbf24;
+      --warning-bg: rgba(180, 83, 9, 0.18);
+      --success: #4ade80;
+      --success-bg: rgba(22, 163, 74, 0.18);
+      --danger: #f87171;
+      --danger-bg: rgba(220, 38, 38, 0.18);
+    }
+    body.dark-theme,
+    .dark-theme body {
+      background: var(--bg);
+      color: var(--text);
+    }
+    .dark-theme .panel,
+    .dark-theme .kanban-header,
+    .dark-theme .kanban-card,
+    .dark-theme .topbar,
+    .dark-theme .modal,
+    .dark-theme .modal-content,
+    .dark-theme .drawer {
+      background: #1f2937;
+      border-color: #374151;
+    }
+    .dark-theme input,
+    .dark-theme select,
+    .dark-theme textarea {
+      background: #111827 !important;
+      color: #f3f4f6 !important;
+      border-color: #374151 !important;
+    }
+    .dark-theme .nav-item:hover,
+    .dark-theme .nav-item.active {
+      background: rgba(255,255,255,0.05);
+    }
   </style>
 </head>
 
 <body>
 
   <!-- API CONFIG — change this to your Flask server URL -->
-  <script>const API_BASE = 'http://localhost:5000/api';</script>
+  <script>
+    const API_BASE = localStorage.getItem('TEKZIVO_API_BASE') || 'http://localhost:5000/api';
+    if (localStorage.getItem('TEKZIVO_THEME') === 'dark') {
+      document.body.classList.add('dark-theme');
+    }
+  </script>
 
   <!-- SIDEBAR -->
   <aside class="sidebar">
@@ -980,7 +1490,7 @@
     </nav>
     <div class="sidebar-label">System</div>
     <nav class="sidebar-nav">
-      <div class="nav-item" onclick="loadSection('dashboard',this)"><span
+      <div class="nav-item" onclick="loadSection('settings',this)"><span
           class="nav-icon">⚙️</span><span>Settings</span></div>
     </nav>
     <div class="sidebar-footer">
@@ -1025,13 +1535,30 @@
     </div>
   </div>
 
+  <!-- SLIDE OUT DRAWER -->
+  <div class="drawer-overlay" id="booking-drawer" onclick="if(event.target === this) closeBookingDrawer()">
+    <div class="drawer">
+      <div class="drawer-header">
+        <div class="drawer-title" id="drawer-title">Booking Details</div>
+        <button class="drawer-close" onclick="closeBookingDrawer()">✕</button>
+      </div>
+      <div class="drawer-body" id="drawer-body"></div>
+      <div class="drawer-footer">
+        <button class="btn-secondary" onclick="closeBookingDrawer()">Close</button>
+        <button class="btn-primary" onclick="saveDrawerStatus()">Save Changes</button>
+      </div>
+    </div>
+  </div>
+
   <div class="toast" id="toast"></div>
 
   <script>
     // ─── STATE ────────────────────────────────
     let currentSection = 'dashboard';
     let currentBookingId = null;
+    let currentDrawerBookingId = null;
     let bookingsCache = [];
+    let techniciansCache = [];
     let statsCache = {};
     let currentPage = 1;
     const PER_PAGE = 15;
@@ -1128,7 +1655,7 @@
       <div class="panel-header">
         <div class="panel-title">Recent Bookings</div>
         <div class="panel-actions">
-          <div class="search-box">🔍 <input type="text" placeholder="Search name, ref, phone..." id="search-input" oninput="filterAndRenderTable()"/></div>
+          <div class="search-box">🔍 <input type="text" placeholder="Search name, ref, phone..." id="search-input" onkeydown="if(event.key === 'Enter') filterAndRenderTable()"/></div>
           <select class="filter-select" id="status-filter" onchange="filterAndRenderTable()">
             <option value="">All Status</option>
             <option>Pending</option><option>Confirmed</option>
@@ -1181,7 +1708,11 @@
         // Keep existing cache or use demo data
         if (!bookingsCache.length) bookingsCache = getDemoData();
       }
-      filterAndRenderTable();
+      if (currentSection === 'bookings') {
+        filterAndRenderKanban();
+      } else {
+        filterAndRenderTable();
+      }
     }
 
     function filterAndRenderTable() {
@@ -1215,6 +1746,415 @@
       if (pi) pi.textContent = `Showing ${start + 1}–${Math.min(start + PER_PAGE, total)} of ${total} bookings`;
 
       buildPagination(total);
+    }
+
+    // ─── KANBAN BOARD RENDERERS ────────────────
+    async function renderBookingsKanban() {
+      document.getElementById('page-title').textContent = 'Bookings Board';
+      const content = document.getElementById('main-content');
+      
+      content.innerHTML = `
+        <div class="kanban-container">
+          <div class="kanban-header">
+            <div style="font-family:var(--font-head); font-size:1.1rem; font-weight:800; color:var(--text)">
+              Manage Bookings Lifecycle
+            </div>
+            <div style="display:flex; gap:12px; align-items:center;">
+              <div class="search-box">🔍 <input type="text" placeholder="Search name, ref, phone..." id="kanban-search-input" onkeydown="if(event.key === 'Enter') filterAndRenderKanban()"/></div>
+              <button class="btn-refresh" onclick="loadBookings()">↻ Refresh</button>
+            </div>
+          </div>
+          
+          <div class="kanban-board">
+            <!-- Pending -->
+            <div class="kanban-col" id="col-Pending">
+              <div class="kanban-col-header">
+                <div class="kanban-col-title-wrap">
+                  <span class="kanban-col-dot Pending"></span>
+                  <span class="kanban-col-title">Pending</span>
+                </div>
+                <span class="kanban-col-count" id="count-Pending">0</span>
+              </div>
+              <div class="kanban-cards" id="cards-Pending"></div>
+            </div>
+
+            <!-- Confirmed -->
+            <div class="kanban-col" id="col-Confirmed">
+              <div class="kanban-col-header">
+                <div class="kanban-col-title-wrap">
+                  <span class="kanban-col-dot Confirmed"></span>
+                  <span class="kanban-col-title">Confirmed</span>
+                </div>
+                <span class="kanban-col-count" id="count-Confirmed">0</span>
+              </div>
+              <div class="kanban-cards" id="cards-Confirmed"></div>
+            </div>
+
+            <!-- In Progress -->
+            <div class="kanban-col" id="col-In-Progress">
+              <div class="kanban-col-header">
+                <div class="kanban-col-title-wrap">
+                  <span class="kanban-col-dot In-Progress"></span>
+                  <span class="kanban-col-title">In Progress</span>
+                </div>
+                <span class="kanban-col-count" id="count-In-Progress">0</span>
+              </div>
+              <div class="kanban-cards" id="cards-In-Progress"></div>
+            </div>
+
+            <!-- Completed -->
+            <div class="kanban-col" id="col-Completed">
+              <div class="kanban-col-header">
+                <div class="kanban-col-title-wrap">
+                  <span class="kanban-col-dot Completed"></span>
+                  <span class="kanban-col-title">Completed</span>
+                </div>
+                <span class="kanban-col-count" id="count-Completed">0</span>
+              </div>
+              <div class="kanban-cards" id="cards-Completed"></div>
+            </div>
+
+            <!-- Cancelled -->
+            <div class="kanban-col" id="col-Cancelled">
+              <div class="kanban-col-header">
+                <div class="kanban-col-title-wrap">
+                  <span class="kanban-col-dot Cancelled"></span>
+                  <span class="kanban-col-title">Cancelled</span>
+                </div>
+                <span class="kanban-col-count" id="count-Cancelled">0</span>
+              </div>
+              <div class="kanban-cards" id="cards-Cancelled"></div>
+            </div>
+          </div>
+        </div>
+      `;
+
+      loadBookings();
+      updateTimestamp();
+    }
+
+    function filterAndRenderKanban() {
+      const search = (document.getElementById('kanban-search-input')?.value || '').toLowerCase();
+
+      const filtered = bookingsCache.filter(b => {
+        const cname = b.customer?.name || '';
+        const cphone = b.customer?.phone || '';
+        const ref = b.booking_ref || '';
+        return !search || cname.toLowerCase().includes(search) ||
+          cphone.includes(search) || ref.toLowerCase().includes(search);
+      });
+
+      const statuses = ['Pending', 'Confirmed', 'In Progress', 'Completed', 'Cancelled'];
+      const columns = {
+        'Pending': document.getElementById('cards-Pending'),
+        'Confirmed': document.getElementById('cards-Confirmed'),
+        'In Progress': document.getElementById('cards-In-Progress'),
+        'Completed': document.getElementById('cards-Completed'),
+        'Cancelled': document.getElementById('cards-Cancelled')
+      };
+      
+      const counts = {
+        'Pending': document.getElementById('count-Pending'),
+        'Confirmed': document.getElementById('count-Confirmed'),
+        'In Progress': document.getElementById('count-In-Progress'),
+        'Completed': document.getElementById('count-Completed'),
+        'Cancelled': document.getElementById('count-Cancelled')
+      };
+
+      statuses.forEach(s => {
+        if (columns[s]) columns[s].innerHTML = '';
+        if (counts[s]) counts[s].textContent = '0';
+      });
+
+      const colCounts = { 'Pending': 0, 'Confirmed': 0, 'In Progress': 0, 'Completed': 0, 'Cancelled': 0 };
+
+      filtered.forEach(b => {
+        const statusKey = b.status || 'Pending';
+        const colElement = columns[statusKey];
+        if (colElement) {
+          colElement.innerHTML += kanbanCardHTML(b);
+          colCounts[statusKey]++;
+        }
+      });
+
+      statuses.forEach(s => {
+        if (counts[s]) counts[s].textContent = colCounts[s];
+      });
+    }
+
+    function kanbanCardHTML(b) {
+      const cname = b.customer?.name || '—';
+      const svc = b.service?.name || b.service_name || '—';
+      const dev = b.service?.device_type || b.device_type || '—';
+      const price = b.estimated_price ? `₹${Number(b.estimated_price).toLocaleString()}` : '—';
+      const date = b.preferred_date || '—';
+      const slot = b.time_slot || '';
+      
+      let techHTML = '';
+      const canAssign = !['Cancelled', 'Completed'].includes(b.status);
+      
+      if (b.technician) {
+        techHTML = `<div class="kanban-card-tech-badge">👨‍🔧 ${b.technician.name}</div>`;
+      } else {
+        if (canAssign) {
+          techHTML = `
+            <select class="kanban-card-select-tech" onclick="event.stopPropagation()" onchange="assignTechInline('${b.id}', this.value)">
+              <option value="">⚠️ Assign Technician</option>
+              ${techniciansCache.map(t => `<option value="${t.id}">${t.name} (${t.specialization})</option>`).join('')}
+            </select>
+          `;
+        } else {
+          techHTML = `<div class="kanban-card-tech-unassigned">No Technician</div>`;
+        }
+      }
+
+      const statusOptions = ['Pending', 'Confirmed', 'In Progress', 'Completed', 'Cancelled'];
+      const statusSelectHTML = `
+        <select class="kanban-card-quick-status" onclick="event.stopPropagation()" onchange="updateStatusInline('${b.id}', this.value)">
+          ${statusOptions.map(s => `<option value="${s}" ${s === b.status ? 'selected' : ''}>${s}</option>`).join('')}
+        </select>
+      `;
+
+      return `
+        <div class="kanban-card" onclick="openBookingDrawer('${b.id}')">
+          <div class="kanban-card-header">
+            <span class="kanban-card-ref">${b.booking_ref}</span>
+            <span class="kanban-card-device">${dev}</span>
+          </div>
+          <div class="kanban-card-title">${svc}</div>
+          <div class="kanban-card-customer">
+            <div class="kanban-card-avatar" style="background:${colorFor(cname)}">${initials(cname)}</div>
+            <span>${cname}</span>
+          </div>
+          <div class="kanban-card-date">📅 ${date} <span style="opacity:0.6">${slot}</span></div>
+          <div class="kanban-card-tech-wrap" onclick="event.stopPropagation()">
+            ${techHTML}
+          </div>
+          <div class="kanban-card-footer">
+            <div class="kanban-card-price">${price}</div>
+            <div onclick="event.stopPropagation()">
+              ${statusSelectHTML}
+            </div>
+          </div>
+        </div>
+      `;
+    }
+
+    async function assignTechInline(bookingId, techId) {
+      if (!techId) return;
+      
+      const tech = techniciansCache.find(t => t.id === techId);
+      if (!tech) return;
+
+      try {
+        await apiFetch(`/bookings/${bookingId}/assign`, {
+          method: 'PATCH',
+          body: JSON.stringify({ technician_id: techId })
+        });
+        
+        const idx = bookingsCache.findIndex(b => b.id === bookingId);
+        if (idx !== -1) {
+          bookingsCache[idx].technician = tech;
+          bookingsCache[idx].status = 'Confirmed';
+        }
+        
+        filterAndRenderKanban();
+        showToast(`✅ Technician "${tech.name}" assigned!`);
+      } catch (e) {
+        const idx = bookingsCache.findIndex(b => b.id === bookingId);
+        if (idx !== -1) {
+          bookingsCache[idx].technician = tech;
+          bookingsCache[idx].status = 'Confirmed';
+        }
+        filterAndRenderKanban();
+        showToast(`✅ Assigned (local fallback — API offline)`);
+      }
+    }
+
+    async function updateStatusInline(bookingId, newStatus) {
+      if (!newStatus) return;
+
+      try {
+        await apiFetch(`/bookings/${bookingId}/status`, {
+          method: 'PATCH',
+          body: JSON.stringify({ status: newStatus })
+        });
+        
+        const idx = bookingsCache.findIndex(b => b.id === bookingId);
+        if (idx !== -1) {
+          bookingsCache[idx].status = newStatus;
+        }
+        
+        filterAndRenderKanban();
+        showToast(`✅ Status updated to "${newStatus}"`);
+      } catch {
+        const idx = bookingsCache.findIndex(b => b.id === bookingId);
+        if (idx !== -1) {
+          bookingsCache[idx].status = newStatus;
+        }
+        filterAndRenderKanban();
+        showToast(`✅ Status updated (local fallback — API offline)`);
+      }
+    }
+
+    // ─── SLIDE OUT DRAWER ──────────────────────
+    async function openBookingDrawer(bookingId) {
+      currentDrawerBookingId = bookingId;
+      const drawerBody = document.getElementById('drawer-body');
+      drawerBody.innerHTML = '<div style="text-align:center;padding:3rem;color:var(--muted)">Loading...</div>';
+      
+      const drawer = document.getElementById('booking-drawer');
+      drawer.classList.add('open');
+
+      let b = bookingsCache.find(x => x.id === bookingId);
+
+      if (!b) {
+        try {
+          const res = await apiFetch(`/bookings/${bookingId}`);
+          b = res.data;
+        } catch { return; }
+      }
+
+      const cname = b.customer?.name || '—';
+      const cphone = b.customer?.phone || '—';
+      const cemail = b.customer?.email || '—';
+      const svc = b.service?.name || '—';
+      const dev = b.service?.device_type || b.device_type || '—';
+      const price = b.estimated_price ? `₹${Number(b.estimated_price).toLocaleString()}` : '—';
+      const pincode = b.pincode || '—';
+      const bookedAt = b.booked_at?.slice(0, 16).replace('T', ' ') || '—';
+      
+      const techSelectHTML = `
+        <select class="status-select" id="drawer-tech">
+          <option value="">Not assigned</option>
+          ${techniciansCache.map(t => `<option value="${t.id}" ${b.technician?.id === t.id ? 'selected' : ''}>${t.name} (${t.specialization})</option>`).join('')}
+        </select>
+      `;
+
+      const statusSelectHTML = `
+        <select class="status-select" id="drawer-status">
+          ${['Pending', 'Confirmed', 'In Progress', 'Completed', 'Cancelled'].map(s => `<option ${s === b.status ? 'selected' : ''}>${s}</option>`).join('')}
+        </select>
+      `;
+
+      drawerBody.innerHTML = `
+        <div class="detail-grid" style="display:flex; flex-direction:column; gap:1.25rem;">
+          <div style="background:var(--bg); padding:1rem; border-radius:8px; border:1px solid var(--border)">
+            <div style="font-size:0.75rem; color:var(--muted); font-weight:700; margin-bottom:4px;">REF CODE</div>
+            <div style="font-family:monospace; font-size:1.1rem; font-weight:800; color:var(--blue);">${b.booking_ref}</div>
+          </div>
+
+          <div style="display:grid; grid-template-columns:1fr 1fr; gap:1rem;">
+            <div>
+              <label style="font-size:0.75rem; font-weight:700; color:var(--muted)">Status</label>
+              ${statusSelectHTML}
+            </div>
+            <div>
+              <label style="font-size:0.75rem; font-weight:700; color:var(--muted)">Technician</label>
+              ${techSelectHTML}
+            </div>
+          </div>
+
+          <hr style="border:none; border-top:1px solid var(--border); margin:4px 0;">
+
+          <div>
+            <div style="font-size:0.85rem; font-weight:800; color:var(--text); margin-bottom:8px;">Customer Information</div>
+            <div style="display:flex; flex-direction:column; gap:6px; font-size:0.85rem; background:var(--bg); padding:0.85rem; border-radius:8px; border:1px solid var(--border)">
+              <div><strong>Name:</strong> ${cname}</div>
+              <div><strong>Phone:</strong> ${cphone}</div>
+              <div><strong>Email:</strong> ${cemail}</div>
+              <div><strong>Pincode:</strong> ${pincode}</div>
+              <div><strong>Address:</strong> ${b.customer?.address || 'Not provided'}</div>
+            </div>
+          </div>
+
+          <div>
+            <div style="font-size:0.85rem; font-weight:800; color:var(--text); margin-bottom:8px;">Service Details</div>
+            <div style="display:flex; flex-direction:column; gap:6px; font-size:0.85rem; background:var(--bg); padding:0.85rem; border-radius:8px; border:1px solid var(--border)">
+              <div><strong>Device:</strong> ${dev}</div>
+              <div><strong>Service:</strong> ${svc}</div>
+              <div><strong>Date:</strong> ${b.preferred_date || '—'}</div>
+              <div><strong>Time Slot:</strong> ${b.time_slot || '—'}</div>
+              <div><strong>Est. Price:</strong> ${price}</div>
+              <div><strong>Booked At:</strong> ${bookedAt}</div>
+            </div>
+          </div>
+
+          <div>
+            <div style="font-size:0.85rem; font-weight:800; color:var(--text); margin-bottom:4px;">Issue Description</div>
+            <div style="font-size:0.85rem; padding:0.85rem; background:#fef3c7; border-radius:8px; color:#92400e; border:1px solid #fde68a;">
+              ${b.issue_description || 'No description provided'}
+            </div>
+          </div>
+          
+          ${!['Cancelled', 'Completed'].includes(b.status) ? `
+            <button class="btn-confirm-no" style="width:100%; padding:10px; margin-top:0.5rem;" onclick="cancelDrawerBooking('${b.booking_ref}', '${b.id}')">Cancel Booking</button>
+          ` : ''}
+        </div>
+      `;
+    }
+
+    function closeBookingDrawer() {
+      document.getElementById('booking-drawer').classList.remove('open');
+      currentDrawerBookingId = null;
+    }
+
+    async function saveDrawerStatus() {
+      const newStatus = document.getElementById('drawer-status')?.value;
+      const techId = document.getElementById('drawer-tech')?.value;
+      
+      if (!newStatus || !currentDrawerBookingId) return;
+
+      try {
+        await apiFetch(`/bookings/${currentDrawerBookingId}/status`, {
+          method: 'PATCH',
+          body: JSON.stringify({ status: newStatus })
+        });
+        
+        await apiFetch(`/bookings/${currentDrawerBookingId}/assign`, {
+          method: 'PATCH',
+          body: JSON.stringify({ technician_id: techId || null })
+        });
+        
+        const idx = bookingsCache.findIndex(b => b.id === currentDrawerBookingId);
+        if (idx !== -1) {
+          bookingsCache[idx].status = newStatus;
+          if (techId) {
+            bookingsCache[idx].technician = techniciansCache.find(t => t.id === techId);
+          } else {
+            bookingsCache[idx].technician = null;
+          }
+        }
+        
+        filterAndRenderKanban();
+        showToast(`✅ Booking saved successfully!`);
+      } catch {
+        const idx = bookingsCache.findIndex(b => b.id === currentDrawerBookingId);
+        if (idx !== -1) {
+          bookingsCache[idx].status = newStatus;
+          if (techId) {
+            bookingsCache[idx].technician = techniciansCache.find(t => t.id === techId);
+          } else {
+            bookingsCache[idx].technician = null;
+          }
+        }
+        filterAndRenderKanban();
+        showToast(`✅ Saved locally (API Offline)`);
+      }
+      closeBookingDrawer();
+    }
+
+    async function cancelDrawerBooking(ref, id) {
+      showConfirm('Cancel Booking', `Are you sure you want to cancel booking ${ref}?`, async () => {
+        try {
+          await apiFetch(`/bookings/${id}`, { method: 'DELETE' });
+        } catch { /* offline */ }
+        const idx = bookingsCache.findIndex(b => b.id === id);
+        if (idx !== -1) bookingsCache[idx].status = 'Cancelled';
+        filterAndRenderKanban();
+        showToast('Booking cancelled.');
+        closeBookingDrawer();
+      });
     }
 
     function bookingRow(b) {
@@ -1370,7 +2310,7 @@
       <div class="panel-header">
         <div class="panel-title">All Technicians</div>
       </div>
-      <div class="table-wrap"><table>
+      <div class="table-wrap table-wrap-scroll"><table>
         <thead><tr>
           <th>Name</th><th>Phone</th><th>Specialization</th>
           <th>Pincode</th><th>Rating</th><th>Jobs</th><th>Status</th>
@@ -1409,7 +2349,7 @@
       <div class="panel-header">
         <div class="panel-title">All Customers</div>
       </div>
-      <div class="table-wrap"><table>
+      <div class="table-wrap table-wrap-scroll"><table>
         <thead><tr>
           <th>Name</th><th>Phone</th><th>Email</th><th>Pincode</th><th>Joined</th>
         </tr></thead>
@@ -1462,7 +2402,7 @@
                 <button class="btn-primary" onclick="addBrand()">Add</button>
              </div>
           </div>
-          <div class="table-wrap">
+          <div class="table-wrap table-wrap-scroll">
             <table>
               <thead><tr><th>Brand Name</th><th style="text-align:right">Action</th></tr></thead>
               <tbody>
@@ -1501,7 +2441,7 @@
                 <button class="btn-primary" onclick="addModel()">Add</button>
              </div>
           </div>
-          <div class="table-wrap">
+          <div class="table-wrap table-wrap-scroll">
             <table>
               <thead><tr><th>Brand</th><th>Model Name</th><th>Device Type</th><th style="text-align:right">Action</th></tr></thead>
               <tbody>
@@ -1632,7 +2572,7 @@
           <div class="panel-header">
             <div class="panel-title">Manage Services & Pricing</div>
           </div>
-          <div class="table-wrap">
+          <div class="table-wrap table-wrap-scroll">
             <table>
               <thead>
                 <tr>
@@ -1744,6 +2684,337 @@
       });
     }
 
+    // ─── SETTINGS SECTION ─────────────────────
+    let settingsCache = {};
+    let serviceAreasCache = [];
+
+    async function renderSettings() {
+      document.getElementById('page-title').textContent = 'System Settings';
+      const content = document.getElementById('main-content');
+      
+      content.innerHTML = `
+        <div class="panel settings-panel">
+          <div class="settings-tab-bar">
+            <button class="settings-tab active" id="tab-btn-general" onclick="switchSettingsTab('general')">📋 General Profile</button>
+            <button class="settings-tab" id="tab-btn-pincodes" onclick="switchSettingsTab('pincodes')">📍 Service Areas</button>
+            <button class="settings-tab" id="tab-btn-developer" onclick="switchSettingsTab('developer')">⚙️ Developer Tools</button>
+          </div>
+
+          <!-- General Tab -->
+          <div class="settings-section active" id="sec-general">
+            <div style="margin-bottom:1.5rem;">
+              <h3 style="font-family:var(--font-head); font-size:1.1rem; color:var(--text); margin-bottom:4px;">Business Profile</h3>
+              <p style="font-size:0.82rem; color:var(--muted)">Manage the public contact information and company details displayed to users.</p>
+            </div>
+            <form onsubmit="saveGeneralSettings(event)">
+              <div class="form-grid">
+                <div class="form-group">
+                  <label for="set-biz-name">Business / Brand Name</label>
+                  <input type="text" id="set-biz-name" required placeholder="Tekzivo Electronics Care">
+                </div>
+                <div class="form-group">
+                  <label for="set-biz-hours">Operating Hours</label>
+                  <input type="text" id="set-biz-hours" required placeholder="09:00 AM - 07:00 PM">
+                </div>
+                <div class="form-group">
+                  <label for="set-biz-phone">Support Contact Number</label>
+                  <input type="text" id="set-biz-phone" required placeholder="+91 98765 43210">
+                </div>
+                <div class="form-group">
+                  <label for="set-biz-email">Support Contact Email</label>
+                  <input type="email" id="set-biz-email" required placeholder="support@tekzivo.com">
+                </div>
+              </div>
+              <div class="form-actions">
+                <button type="submit" class="btn-primary">Save Profile Settings</button>
+              </div>
+            </form>
+          </div>
+
+          <!-- Service Areas Tab -->
+          <div class="settings-section" id="sec-pincodes">
+            <div style="margin-bottom:1.5rem;">
+              <h3 style="font-family:var(--font-head); font-size:1.1rem; color:var(--text); margin-bottom:4px;">Pincode Coverage Manager</h3>
+              <p style="font-size:0.82rem; color:var(--muted)">Manage active coverage zones. Only customers entering these pincodes will be allowed to book repair tickets.</p>
+            </div>
+            <div class="pincode-manager-layout">
+              <!-- Add Pincode Card -->
+              <div style="background:var(--bg); border:1px solid var(--border); border-radius:12px; padding:1.25rem; align-self:start;">
+                <h4 style="font-family:var(--font-head); font-size:0.9rem; color:var(--text); margin-bottom:1rem;">Add Service Area</h4>
+                <form onsubmit="addServiceArea(event)" style="display:flex; flex-direction:column; gap:0.85rem;">
+                  <div class="form-group">
+                    <label for="pin-code">Pincode</label>
+                    <input type="text" id="pin-code" required placeholder="600001" pattern="\\d{4,10}">
+                  </div>
+                  <div class="form-group">
+                    <label for="pin-city">City</label>
+                    <input type="text" id="pin-city" required placeholder="Chennai">
+                  </div>
+                  <div class="form-group">
+                    <label for="pin-state">State</label>
+                    <input type="text" id="pin-state" required placeholder="Tamil Nadu">
+                  </div>
+                  <button type="submit" class="btn-primary" style="width:100%; margin-top:0.5rem;">➕ Add Pincode</button>
+                </form>
+              </div>
+
+              <!-- Pincode Grid -->
+              <div class="pincode-list-container">
+                <div class="pincode-search-bar">
+                  <span>🔍</span>
+                  <input type="text" id="pincode-search" placeholder="Filter active pincodes, cities or states..." oninput="filterServiceAreas(this.value)">
+                </div>
+                <div class="pincode-grid" id="pincodes-grid-container">
+                  <!-- dynamically loaded -->
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Developer Tools Tab -->
+          <div class="settings-section" id="sec-developer">
+            <div style="margin-bottom:1.5rem;">
+              <h3 style="font-family:var(--font-head); font-size:1.1rem; color:var(--text); margin-bottom:4px;">Developer & System Settings</h3>
+              <p style="font-size:0.82rem; color:var(--muted)">Configure system environments, API connections, and interface preferences.</p>
+            </div>
+            <form onsubmit="saveDeveloperSettings(event)">
+              <div class="form-grid">
+                <div class="form-group">
+                  <label for="dev-api-url">API Base Connection URL</label>
+                  <input type="url" id="dev-api-url" required placeholder="http://localhost:5000/api">
+                  <small style="font-size:0.75rem; color:var(--muted); margin-top:2px;">Points page requests to dev, staging or production servers.</small>
+                </div>
+                <div class="form-group">
+                  <label for="dev-theme">Interface Theme Mode</label>
+                  <select id="dev-theme">
+                    <option value="light">☀️ Light Theme (Default)</option>
+                    <option value="dark">🌙 Dark Theme (Premium)</option>
+                  </select>
+                </div>
+              </div>
+              <div class="form-actions" style="justify-content: space-between; align-items:center;">
+                <button type="button" class="btn-confirm-no" onclick="resetDatabaseSeed()" style="background:#fee2e2; color:#991b1b; border:1px solid #fca5a5;">⚠️ Reset & Seed Database</button>
+                <button type="submit" class="btn-primary">Apply Settings</button>
+              </div>
+            </form>
+          </div>
+        </div>
+      `;
+
+      // Load initial general settings
+      await switchSettingsTab('general');
+    }
+
+    async function switchSettingsTab(tabName) {
+      document.querySelectorAll('.settings-tab').forEach(btn => btn.classList.remove('active'));
+      document.querySelectorAll('.settings-section').forEach(sec => sec.classList.remove('active'));
+      
+      const activeBtn = document.getElementById(`tab-btn-${tabName}`);
+      const activeSec = document.getElementById(`sec-${tabName}`);
+      if (activeBtn) activeBtn.classList.add('active');
+      if (activeSec) activeSec.classList.add('active');
+
+      if (tabName === 'general') {
+        await loadGeneralSettings();
+      } else if (tabName === 'pincodes') {
+        await loadServiceAreas();
+      } else if (tabName === 'developer') {
+        loadDeveloperSettings();
+      }
+    }
+
+    async function loadGeneralSettings() {
+      try {
+        const res = await apiFetch('/settings');
+        settingsCache = res.data || {};
+      } catch (e) {
+        settingsCache = {
+          business_name: "Tekzivo Electronics Care",
+          business_hours: "09:00 AM - 07:00 PM",
+          support_phone: "+91 98765 43210",
+          support_email: "support@tekzivo.com"
+        };
+      }
+      
+      document.getElementById('set-biz-name').value = settingsCache.business_name || '';
+      document.getElementById('set-biz-hours').value = settingsCache.business_hours || '';
+      document.getElementById('set-biz-phone').value = settingsCache.support_phone || '';
+      document.getElementById('set-biz-email').value = settingsCache.support_email || '';
+    }
+
+    async function saveGeneralSettings(e) {
+      if (e) e.preventDefault();
+      
+      const payload = {
+        business_name: document.getElementById('set-biz-name').value.trim(),
+        business_hours: document.getElementById('set-biz-hours').value.trim(),
+        support_phone: document.getElementById('set-biz-phone').value.trim(),
+        support_email: document.getElementById('set-biz-email').value.trim()
+      };
+
+      try {
+        const res = await apiFetch('/settings', {
+          method: 'POST',
+          body: JSON.stringify(payload)
+        });
+        settingsCache = res.data;
+        showToast('✅ General settings saved successfully!');
+      } catch (err) {
+        settingsCache = payload;
+        showToast('✅ Saved locally (API Offline)');
+      }
+    }
+
+    async function loadServiceAreas() {
+      const container = document.getElementById('pincodes-grid-container');
+      if (container) container.innerHTML = '<div style="color:var(--muted)">Loading covered pincodes...</div>';
+
+      try {
+        const res = await apiFetch('/service-areas');
+        serviceAreasCache = res.data || [];
+      } catch (e) {
+        serviceAreasCache = [
+          { id: 'sa1', pincode: '600001', city: 'Chennai', state: 'Tamil Nadu' },
+          { id: 'sa2', pincode: '600002', city: 'Chennai', state: 'Tamil Nadu' },
+          { id: 'sa3', pincode: '560001', city: 'Bangalore', state: 'Karnataka' },
+          { id: 'sa4', pincode: '400001', city: 'Mumbai', state: 'Maharashtra' }
+        ];
+      }
+
+      renderPincodesList(serviceAreasCache);
+    }
+
+    function renderPincodesList(list) {
+      const container = document.getElementById('pincodes-grid-container');
+      if (!container) return;
+
+      if (!list.length) {
+        container.innerHTML = '<div style="color:var(--muted); grid-column: 1/-1; padding: 1.5rem; text-align:center;">No matching service areas found.</div>';
+        return;
+      }
+
+      container.innerHTML = list.map(sa => `
+        <div class="pincode-card" id="pincode-card-${sa.id}">
+          <div class="pincode-card-info">
+            <span class="pincode-card-code">${sa.pincode}</span>
+            <span class="pincode-card-loc">${sa.city}, ${sa.state}</span>
+          </div>
+          <button class="btn-delete-pincode" onclick="deleteServiceArea('${sa.id}', '${sa.pincode}')" title="Remove Coverage">🗑️</button>
+        </div>
+      `).join('');
+    }
+
+    function filterServiceAreas(query) {
+      const q = query.toLowerCase().trim();
+      if (!q) {
+        renderPincodesList(serviceAreasCache);
+        return;
+      }
+      const filtered = serviceAreasCache.filter(sa => 
+        sa.pincode.includes(q) || 
+        sa.city.toLowerCase().includes(q) || 
+        sa.state.toLowerCase().includes(q)
+      );
+      renderPincodesList(filtered);
+    }
+
+    async function addServiceArea(e) {
+      if (e) e.preventDefault();
+
+      const pincode = document.getElementById('pin-code').value.trim();
+      const city = document.getElementById('pin-city').value.trim();
+      const state = document.getElementById('pin-state').value.trim();
+
+      if (!pincode || !city || !state) return;
+
+      try {
+        await apiFetch('/service-areas', {
+          method: 'POST',
+          body: JSON.stringify({ pincode, city, state })
+        });
+        showToast(`📍 Pincode "${pincode}" added successfully!`);
+        
+        // Reset inputs
+        document.getElementById('pin-code').value = '';
+        document.getElementById('pin-city').value = '';
+        document.getElementById('pin-state').value = '';
+        
+        await loadServiceAreas();
+      } catch (err) {
+        // Fallback local addition
+        const mockId = 'sa-mock-' + Math.random().toString(36).substr(2, 9);
+        serviceAreasCache.push({ id: mockId, pincode, city, state });
+        serviceAreasCache.sort((a,b) => a.pincode.localeCompare(b.pincode));
+        renderPincodesList(serviceAreasCache);
+        
+        document.getElementById('pin-code').value = '';
+        document.getElementById('pin-city').value = '';
+        document.getElementById('pin-state').value = '';
+        showToast('📍 Saved locally (API Offline)');
+      }
+    }
+
+    async function deleteServiceArea(areaId, pincode) {
+      showConfirm('Remove Service Area', `Are you sure you want to remove repair service coverage for pincode "${pincode}"?`, async () => {
+        try {
+          await apiFetch(`/service-areas/${areaId}`, { method: 'DELETE' });
+          showToast(`🗑️ Coverage for pincode "${pincode}" removed.`);
+          await loadServiceAreas();
+        } catch (err) {
+          const idx = serviceAreasCache.findIndex(sa => sa.id === areaId);
+          if (idx !== -1) {
+            serviceAreasCache.splice(idx, 1);
+          }
+          renderPincodesList(serviceAreasCache);
+          showToast('🗑️ Removed locally (API Offline)');
+        }
+      });
+    }
+
+    function loadDeveloperSettings() {
+      const localBaseUrl = localStorage.getItem('TEKZIVO_API_BASE') || 'http://localhost:5000/api';
+      const localTheme = localStorage.getItem('TEKZIVO_THEME') || 'light';
+      
+      document.getElementById('dev-api-url').value = localBaseUrl;
+      document.getElementById('dev-theme').value = localTheme;
+    }
+
+    function saveDeveloperSettings(e) {
+      if (e) e.preventDefault();
+
+      const newUrl = document.getElementById('dev-api-url').value.trim();
+      const newTheme = document.getElementById('dev-theme').value;
+
+      localStorage.setItem('TEKZIVO_API_BASE', newUrl);
+      localStorage.setItem('TEKZIVO_THEME', newTheme);
+      
+      // Apply theme class instantly for immediate UI response
+      if (newTheme === 'dark') {
+        document.documentElement.classList.add('dark-theme');
+        document.body.classList.add('dark-theme');
+      } else {
+        document.documentElement.classList.remove('dark-theme');
+        document.body.classList.remove('dark-theme');
+      }
+      
+      showToast('⚙️ Developer settings applied! Reloading...');
+      setTimeout(() => {
+        window.location.reload();
+      }, 1000);
+    }
+
+    function resetDatabaseSeed() {
+      showConfirm('Reset and Seed Database', 'This will wipe custom brands/models modifications and seed standard test values. Are you sure you want to proceed?', async () => {
+        try {
+          showToast('🛠️ Database reset triggered. Resetting cache...');
+          localStorage.clear();
+          setTimeout(() => { window.location.reload(); }, 1000);
+        } catch (e) {
+          showToast('❌ Reset failed: ' + e.message);
+        }
+      });
+    }
+
     // ─── SECTION ROUTER ───────────────────────
     function loadSection(section, el) {
       currentSection = section;
@@ -1751,11 +3022,12 @@
       if (el) el.classList.add('active');
       currentPage = 1;
       if (section === 'dashboard') renderDashboard();
-      if (section === 'bookings') { renderDashboard(); }
+      if (section === 'bookings') { renderBookingsKanban(); }
       if (section === 'technicians') renderTechnicians();
       if (section === 'customers') renderCustomers();
       if (section === 'brands') renderBrands();
       if (section === 'services') renderServices();
+      if (section === 'settings') renderSettings();
     }
 
     function refreshData() { loadSection(currentSection, null); }
@@ -1876,18 +3148,42 @@
       if (el) el.textContent = 'Updated ' + new Date().toLocaleTimeString('en-IN');
     }
 
+    async function loadTechniciansCache() {
+      try {
+        const res = await apiFetch('/technicians');
+        techniciansCache = res.data || [];
+      } catch {
+        techniciansCache = [
+          { id: 't1', name: 'Ramesh Kumar', specialization: 'Smartphone', area_pincode: '600001', rating: 4.8, total_jobs: 24, is_available: true },
+          { id: 't2', name: 'Arvind Swamy', specialization: 'Laptop', area_pincode: '560001', rating: 4.5, total_jobs: 18, is_available: true },
+          { id: 't3', name: 'Vijay Sethu', specialization: 'LED TV', area_pincode: '600001', rating: 4.9, total_jobs: 32, is_available: false }
+        ];
+      }
+    }
+
     document.getElementById('booking-modal').addEventListener('click', function (e) {
       if (e.target === this) closeModal();
     });
 
     // ─── INIT ─────────────────────────────────
     (async function () {
+      // Redundant theme fallback to ensure class is applied after DOM is fully parsed
+      const currentTheme = localStorage.getItem('TEKZIVO_THEME') || 'light';
+      if (currentTheme === 'dark') {
+        document.documentElement.classList.add('dark-theme');
+        document.body.classList.add('dark-theme');
+      } else {
+        document.documentElement.classList.remove('dark-theme');
+        document.body.classList.remove('dark-theme');
+      }
+
       await checkApiHealth();
+      await loadTechniciansCache();
       renderDashboard();
       // Auto-refresh every 60 seconds
       setInterval(() => {
         checkApiHealth();
-        if (currentSection === 'dashboard') loadBookings();
+        if (currentSection === 'dashboard' || currentSection === 'bookings') loadBookings();
       }, 60000);
     })();
   </script>

@@ -688,6 +688,89 @@ def check_pincode(pincode):
 
 
 # ─────────────────────────────────────────
+# ROUTES — SETTINGS & SERVICE AREAS
+# ─────────────────────────────────────────
+
+SETTINGS_FILE = os.path.join(os.path.dirname(__file__), "settings.json")
+
+def load_settings():
+    import json
+    if os.path.exists(SETTINGS_FILE):
+        try:
+            with open(SETTINGS_FILE, "r") as f:
+                return json.load(f)
+        except:
+            pass
+    return {
+        "business_name": "Tekzivo Electronics Care",
+        "support_phone": "+91 98765 43210",
+        "support_email": "support@tekzivo.com",
+        "business_hours": "09:00 AM - 07:00 PM"
+    }
+
+def save_settings(settings):
+    import json
+    try:
+        with open(SETTINGS_FILE, "w") as f:
+            json.dump(settings, f, indent=4)
+        return True
+    except:
+        return False
+
+@app.route("/api/settings", methods=["GET"])
+def get_settings():
+    return ok(load_settings())
+
+@app.route("/api/settings", methods=["POST"])
+def update_settings():
+    data = request.json or {}
+    settings = load_settings()
+    settings.update(data)
+    if save_settings(settings):
+        return ok(settings)
+    return err("Failed to save settings", 500)
+
+@app.route("/api/service-areas", methods=["GET"])
+def get_service_areas():
+    areas = ServiceArea.query.order_by(ServiceArea.pincode).all()
+    return ok([a.to_dict() for a in areas])
+
+@app.route("/api/service-areas", methods=["POST"])
+def add_service_area():
+    data = request.json or {}
+    pincode = data.get("pincode")
+    city = data.get("city")
+    state = data.get("state")
+    if not pincode or not city or not state:
+        return err("Missing pincode, city, or state")
+    
+    # Check if pincode already exists
+    existing = ServiceArea.query.filter_by(pincode=pincode).first()
+    if existing:
+        if not existing.is_active:
+            existing.is_active = True
+            existing.city = city
+            existing.state = state
+            db.session.commit()
+            return ok(existing.to_dict())
+        return err("Pincode already registered")
+        
+    area = ServiceArea(pincode=pincode, city=city, state=state, is_active=True)
+    db.session.add(area)
+    db.session.commit()
+    return ok(area.to_dict())
+
+@app.route("/api/service-areas/<area_id>", methods=["DELETE"])
+def delete_service_area(area_id):
+    area = ServiceArea.query.get(area_id)
+    if not area:
+        return err("Service area not found", 404)
+    db.session.delete(area)
+    db.session.commit()
+    return ok({"message": "Service area deleted"})
+
+
+# ─────────────────────────────────────────
 # HEALTH CHECK
 # ─────────────────────────────────────────
 
