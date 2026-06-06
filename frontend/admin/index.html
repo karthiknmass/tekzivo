@@ -2281,10 +2281,19 @@
 
           <div>
             <div style="font-size:0.85rem; font-weight:800; color:var(--text); margin-bottom:4px;">Issue Description</div>
-            <div style="font-size:0.85rem; padding:0.85rem; background:#fef3c7; border-radius:8px; color:#92400e; border:1px solid #fde68a;">
-              ${b.issue_description || 'No description provided'}
+            <div style="font-size:0.85rem; padding:0.85rem; background:#fef3c7; border-radius:8px; color:#92400e; border:1px solid #fde68a; white-space: pre-wrap;">${b.issue_description || 'No description provided'}</div>
+          </div>
+          
+          ${b.image_path ? `
+          <div>
+            <div style="font-size:0.85rem; font-weight:800; color:var(--text); margin-bottom:4px;">Attached Device Photo</div>
+            <div style="padding:0.5rem; background:var(--bg); border:1px solid var(--border); border-radius:8px; display:inline-block;">
+              <a href="${b.image_path.startsWith('/') ? b.image_path : '/' + b.image_path}" target="_blank" title="Click to view full image">
+                <img src="${b.image_path.startsWith('/') ? b.image_path : '/' + b.image_path}" style="max-width:100%; max-height:220px; border-radius:6px; display:block;" alt="Device Photo">
+              </a>
             </div>
           </div>
+          ` : ''}
           
           ${!['Cancelled', 'Completed'].includes(b.status) ? `
             <button class="btn-confirm-no" style="width:100%; padding:10px; margin-top:0.5rem;" onclick="cancelDrawerBooking('${b.booking_ref}', '${b.id}')">Cancel Booking</button>
@@ -2448,7 +2457,17 @@
       <div class="detail-item"><div class="detail-label">Technician</div><div class="detail-value">${tech}</div></div>
       <div class="detail-item"><div class="detail-label">Pincode</div><div class="detail-value">${b.pincode || '—'}</div></div>
       <div class="detail-item"><div class="detail-label">Booked At</div><div class="detail-value">${b.booked_at?.slice(0, 16).replace('T', ' ') || '—'}</div></div>
-      <div class="detail-full"><div class="detail-label">Issue Description</div><div class="detail-value">${b.issue_description || 'Not provided'}</div></div>
+      <div class="detail-full"><div class="detail-label">Issue Description</div><div class="detail-value" style="white-space: pre-wrap;">${b.issue_description || 'Not provided'}</div></div>
+      ${b.image_path ? `
+      <div class="detail-full">
+        <div class="detail-label">Attached Device Photo</div>
+        <div class="detail-value" style="margin-top:8px;">
+          <a href="${b.image_path.startsWith('/') ? b.image_path : '/' + b.image_path}" target="_blank" title="Click to view full image">
+            <img src="${b.image_path.startsWith('/') ? b.image_path : '/' + b.image_path}" style="max-width:300px; max-height:200px; border-radius:6px; object-fit:cover; display:block; border:1px solid var(--border);" alt="Device Photo">
+          </a>
+        </div>
+      </div>
+      ` : ''}
     </div>`;
     }
 

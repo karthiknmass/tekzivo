@@ -173,13 +173,17 @@
                 <div class="form-row">
                     <div class="form-group">
                         <label>Device Brand *</label>
-                        <input list="brand-list" class="form-control" id="f-brand" placeholder="Type or select Brand..." onchange="loadModelsForBrand(this.value)">
-                        <datalist id="brand-list"></datalist>
+                        <select class="form-control" id="f-brand" onchange="onBrandChange(this.value)">
+                            <option value="">Select Brand...</option>
+                        </select>
+                        <input type="text" class="form-control" id="f-brand-custom" placeholder="Type custom Brand name..." style="display: none; margin-top: 8px;">
                     </div>
                     <div class="form-group">
                         <label>Device Model *</label>
-                        <input list="model-list" class="form-control" id="f-model" placeholder="Type or select Model..." disabled>
-                        <datalist id="model-list"></datalist>
+                        <select class="form-control" id="f-model" onchange="onModelChange(this.value)" disabled>
+                            <option value="">Select Model...</option>
+                        </select>
+                        <input type="text" class="form-control" id="f-model-custom" placeholder="Type custom Model name..." style="display: none; margin-top: 8px;">
                     </div>
                 </div>
 
@@ -220,6 +224,28 @@
                 <div class="form-group">
                     <label>Full Address *</label>
                     <textarea class="form-control" id="f-address" rows="3" placeholder="Flat, Street, Area..."></textarea>
+                </div>
+
+                <div class="form-group">
+                    <label>Describe the Issue *</label>
+                    <textarea class="form-control" id="f-description" rows="3" placeholder="Describe the issue in detail (e.g. screen flickers, battery draining, water damage details)..."></textarea>
+                </div>
+
+                <div class="form-group">
+                    <label>Upload Device Photo (Optional)</label>
+                    <div class="upload-container">
+                        <input type="file" id="f-upload" accept="image/*" style="display: none;" onchange="handleFileSelect(this)">
+                        <div class="upload-row">
+                            <button type="button" class="btn-upload-trigger" onclick="document.getElementById('f-upload').click()">
+                                <span class="upload-trigger-icon">📸</span> Choose Photo
+                            </button>
+                            <div class="upload-preview-compact" id="upload-preview-container" style="display: none;">
+                                <img id="upload-preview-img" src="" alt="Preview">
+                                <span id="upload-file-name" class="upload-file-name-compact">filename.png</span>
+                                <button type="button" class="btn-remove-compact" onclick="removeSelectedFile()" title="Remove image">×</button>
+                            </div>
+                        </div>
+                    </div>
                 </div>
 
                 <button class="btn-submit" id="submit-btn" onclick="submitBooking()">CONFIRM BOOKING</button>
@@ -596,12 +622,18 @@
             document.getElementById('chk-price').innerText = `₹${price}`;
             
             // Populate brands dropdown based on device
-            const brandList = document.getElementById('brand-list');
-            const modelList = document.getElementById('model-list');
-            brandList.innerHTML = '';
-            modelList.innerHTML = '';
+            const brandSelect = document.getElementById('f-brand');
+            const modelSelect = document.getElementById('f-model');
             
-            document.getElementById('f-model').disabled = true;
+            brandSelect.innerHTML = '<option value="">Select Brand...</option>';
+            modelSelect.innerHTML = '<option value="">Select Model...</option>';
+            modelSelect.disabled = true;
+            
+            // Hide custom inputs
+            document.getElementById('f-brand-custom').style.display = 'none';
+            document.getElementById('f-brand-custom').value = '';
+            document.getElementById('f-model-custom').style.display = 'none';
+            document.getElementById('f-model-custom').value = '';
 
             const validBrands = new Set(allModels.filter(m => m.device_type === device).map(m => m.brand_id));
 
@@ -609,37 +641,121 @@
                 if (validBrands.has(b.id)) {
                     const opt = document.createElement('option');
                     opt.value = b.name;
-                    brandList.appendChild(opt);
+                    opt.innerText = b.name;
+                    brandSelect.appendChild(opt);
                 }
             });
+            
+            // Add custom brand option
+            const customOpt = document.createElement('option');
+            customOpt.value = "__CUSTOM__";
+            customOpt.innerText = "Other (Type custom brand...)";
+            brandSelect.appendChild(customOpt);
             
             document.getElementById('modal-body-content').style.display = 'block';
             document.getElementById('modal-success-content').style.display = 'none';
             document.getElementById('checkout-modal').classList.add('active');
         }
 
-        function loadModelsForBrand(brandName) {
-            const modelInput = document.getElementById('f-model');
-            const modelList = document.getElementById('model-list');
+        function onBrandChange(brandName) {
+            const customBrandInput = document.getElementById('f-brand-custom');
+            const modelSelect = document.getElementById('f-model');
+            const customModelInput = document.getElementById('f-model-custom');
             
-            modelList.innerHTML = '';
-            modelInput.value = '';
+            // Reset custom inputs and model selection
+            customBrandInput.value = '';
+            customModelInput.value = '';
+            customModelInput.style.display = 'none';
+            modelSelect.innerHTML = '<option value="">Select Model...</option>';
 
             if (!brandName) {
-                modelInput.disabled = true;
+                customBrandInput.style.display = 'none';
+                modelSelect.disabled = true;
                 return;
             }
-            modelInput.disabled = false;
-            
+
+            if (brandName === "__CUSTOM__") {
+                customBrandInput.style.display = 'block';
+                // For custom brand, enable model selection but only show custom option
+                modelSelect.disabled = false;
+                modelSelect.innerHTML = '<option value="">Select Model...</option>';
+                const customOpt = document.createElement('option');
+                customOpt.value = "__CUSTOM__";
+                customOpt.innerText = "Other (Type custom model...)";
+                modelSelect.appendChild(customOpt);
+                return;
+            }
+
+            customBrandInput.style.display = 'none';
+            modelSelect.disabled = false;
+
             const brandObj = allBrands.find(b => b.name.toLowerCase() === brandName.toLowerCase());
             if (brandObj) {
                 const filteredModels = allModels.filter(m => m.brand_id === brandObj.id && m.device_type === checkoutData.device);
                 filteredModels.forEach(m => {
                     const opt = document.createElement('option');
                     opt.value = m.name;
-                    modelList.appendChild(opt);
+                    opt.innerText = m.name;
+                    modelSelect.appendChild(opt);
                 });
             }
+            
+            // Add custom model option
+            const customOpt = document.createElement('option');
+            customOpt.value = "__CUSTOM__";
+            customOpt.innerText = "Other (Type custom model...)";
+            modelSelect.appendChild(customOpt);
+        }
+
+        function onModelChange(modelName) {
+            const customModelInput = document.getElementById('f-model-custom');
+            customModelInput.value = '';
+            if (modelName === "__CUSTOM__") {
+                customModelInput.style.display = 'block';
+            } else {
+                customModelInput.style.display = 'none';
+            }
+        }
+
+        let selectedFile = null;
+
+        function handleFileSelect(input) {
+            const file = input.files[0];
+            if (!file) return;
+
+            // Validate file size (max 5MB)
+            if (file.size > 5 * 1024 * 1024) {
+                showToast('❌ File is too large. Max size is 5MB.');
+                input.value = '';
+                return;
+            }
+
+            selectedFile = file;
+
+            // Update preview UI
+            const previewContainer = document.getElementById('upload-preview-container');
+            const previewImg = document.getElementById('upload-preview-img');
+            const fileNameSpan = document.getElementById('upload-file-name');
+
+            fileNameSpan.innerText = file.name;
+            
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                previewImg.src = e.target.result;
+                previewContainer.style.display = 'flex';
+            };
+            reader.readAsDataURL(file);
+        }
+
+        function removeSelectedFile() {
+            selectedFile = null;
+            const fileInput = document.getElementById('f-upload');
+            fileInput.value = '';
+
+            const previewContainer = document.getElementById('upload-preview-container');
+            const previewImg = document.getElementById('upload-preview-img');
+            previewImg.src = '';
+            previewContainer.style.display = 'none';
         }
 
         function closeModal() {
@@ -649,14 +765,31 @@
             setTimeout(() => {
                 document.getElementById('modal-body-content').style.display = 'block';
                 document.getElementById('modal-success-content').style.display = 'none';
-                document.getElementById('f-brand').value = '';
-                document.getElementById('f-model').value = '';
+                
+                // Reset brand and model selectors
+                const brandSelect = document.getElementById('f-brand');
+                const modelSelect = document.getElementById('f-model');
+                brandSelect.innerHTML = '<option value="">Select Brand...</option>';
+                modelSelect.innerHTML = '<option value="">Select Model...</option>';
+                modelSelect.disabled = true;
+
+                // Reset custom text inputs
+                document.getElementById('f-brand-custom').style.display = 'none';
+                document.getElementById('f-brand-custom').value = '';
+                document.getElementById('f-model-custom').style.display = 'none';
+                document.getElementById('f-model-custom').value = '';
+
                 document.getElementById('f-name').value = '';
                 document.getElementById('f-phone').value = '';
                 document.getElementById('f-pincode').value = '';
                 document.getElementById('f-date').value = '';
                 document.getElementById('f-timeslot').value = '';
                 document.getElementById('f-address').value = '';
+                document.getElementById('f-description').value = '';
+                document.getElementById('f-upload').value = '';
+                selectedFile = null;
+                document.getElementById('upload-preview-container').style.display = 'none';
+                document.getElementById('upload-preview-img').src = '';
                 document.getElementById('pincode-msg').innerHTML = '';
             }, 200);
         }
@@ -693,8 +826,19 @@
         }
 
         async function submitBooking() {
-            let brandName = document.getElementById('f-brand').value.trim();
-            let modelName = document.getElementById('f-model').value.trim();
+            let brandName = document.getElementById('f-brand').value;
+            if (brandName === "__CUSTOM__") {
+                brandName = document.getElementById('f-brand-custom').value.trim();
+            } else {
+                brandName = brandName.trim();
+            }
+
+            let modelName = document.getElementById('f-model').value;
+            if (modelName === "__CUSTOM__") {
+                modelName = document.getElementById('f-model-custom').value.trim();
+            } else {
+                modelName = modelName.trim();
+            }
 
             const name = document.getElementById('f-name').value;
             const phone = document.getElementById('f-phone').value;
@@ -710,6 +854,31 @@
 
             const btn = document.getElementById('submit-btn');
             btn.disabled = true;
+            btn.innerText = 'PROCESSING...';
+
+            let image_path = null;
+            if (selectedFile) {
+                btn.innerText = 'UPLOADING IMAGE...';
+                const formData = new FormData();
+                formData.append('file', selectedFile);
+
+                try {
+                    const uploadRes = await fetch(`${API_BASE}/upload`, {
+                        method: 'POST',
+                        body: formData
+                    }).then(r => r.json());
+
+                    if (uploadRes.success) {
+                        image_path = uploadRes.data.file_path;
+                    } else {
+                        showToast('⚠️ Image upload failed: ' + uploadRes.error + '. Proceeding without image.');
+                    }
+                } catch (e) {
+                    console.error("Image upload error", e);
+                    showToast('⚠️ Image upload error. Proceeding without image.');
+                }
+            }
+
             btn.innerText = 'PROCESSING...';
 
             let finalBrandId = null;
@@ -741,6 +910,7 @@
 
             // Remove duplicate btn declaration
 
+            const customDescription = document.getElementById('f-description').value.trim();
             const payload = {
                 name: name,
                 phone: phone,
@@ -749,7 +919,8 @@
                 device_type: checkoutData.device,
                 issue_type: checkoutData.issue,
                 service_id: checkoutData.service_id || null,
-                issue_description: `Brand: ${brandName}, Model: ${modelName}`,
+                issue_description: `Brand: ${brandName}, Model: ${modelName}${customDescription ? '\n\nDescription:\n' + customDescription : ''}`,
+                image_path: image_path,
                 preferred_date: date,
                 time_slot: time_slot,
                 estimated_price: checkoutData.price

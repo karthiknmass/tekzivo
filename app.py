@@ -54,6 +54,9 @@ import io
 # ─────────────────────────────────────────
 @app.after_request
 def compress(response):
+    if response.direct_passthrough:
+        return response
+
     accept_encoding = request.headers.get("Accept-Encoding", "")
     if "gzip" not in accept_encoding.lower():
         return response
@@ -177,6 +180,7 @@ class Booking(db.Model):
     preferred_date    = db.Column(db.Date,        nullable=False, index=True)
     time_slot         = db.Column(db.String(30),  nullable=False)
     issue_description = db.Column(db.Text,        nullable=True)
+    image_path        = db.Column(db.String(255), nullable=True)
     estimated_price   = db.Column(db.Numeric(10, 2), nullable=False, default=0)
     final_price       = db.Column(db.Numeric(10, 2), nullable=True)
     address           = db.Column(db.Text,        nullable=True)
@@ -197,6 +201,7 @@ class Booking(db.Model):
             "preferred_date":    self.preferred_date.isoformat() if self.preferred_date else None,
             "time_slot":         self.time_slot,
             "issue_description": self.issue_description,
+            "image_path":        self.image_path,
             "estimated_price":   float(self.estimated_price),
             "final_price":       float(self.final_price) if self.final_price else None,
             "pincode":           self.pincode,
@@ -299,6 +304,12 @@ def create_booking():
         )
         db.session.add(customer)
         db.session.flush()
+    else:
+        # Update existing customer details with the latest submission info
+        customer.name = data["name"]
+        if "email" in data:
+            customer.email = data["email"]
+        customer.pincode = data["pincode"]
 
     # Find matching service
     service = None
@@ -338,6 +349,7 @@ def create_booking():
         preferred_date    = pref_date,
         time_slot         = data["time_slot"],
         issue_description = data.get("issue_description", ""),
+        image_path        = data.get("image_path"),
         estimated_price   = est_price,
         pincode           = data["pincode"],
         address           = data.get("address", "")
@@ -848,6 +860,36 @@ def delete_service_area(area_id):
 
 
 # ─────────────────────────────────────────
+# ROUTES — UPLOADS
+# ─────────────────────────────────────────
+
+@app.route("/api/upload", methods=["POST"])
+def upload_file():
+    if "file" not in request.files:
+        return err("No file part", 400)
+    file = request.files["file"]
+    if file.filename == "":
+        return err("No selected file", 400)
+    
+    # Allow safe image formats
+    allowed_extensions = {".png", ".jpg", ".jpeg", ".gif", ".webp", ".heic"}
+    ext = os.path.splitext(file.filename)[1].lower()
+    if ext not in allowed_extensions:
+        return err("Invalid file type. Only images are allowed.", 400)
+    
+    # Ensure uploads folder exists in static directory
+    uploads_dir = os.path.join(app.static_folder, "uploads")
+    os.makedirs(uploads_dir, exist_ok=True)
+    
+    # Save the file with a unique name
+    unique_filename = f"{uuid.uuid4()}{ext}"
+    file_path = os.path.join(uploads_dir, unique_filename)
+    file.save(file_path)
+    
+    return ok({"file_path": f"/uploads/{unique_filename}"})
+
+
+# ─────────────────────────────────────────
 # HEALTH CHECK
 # ─────────────────────────────────────────
 
@@ -966,6 +1008,13 @@ def admin():
 
 
 def create_indexes():
+    # Attempt to add image_path column if it doesn't exist (SQLite migration fallback)
+    try:
+        db.session.execute(text("ALTER TABLE bookings ADD COLUMN image_path TEXT;"))
+        db.session.commit()
+    except Exception:
+        db.session.rollback()
+
     # SQLite-specific raw CREATE INDEX statements for robustness
     statements = [
         "CREATE INDEX IF NOT EXISTS idx_bookings_status ON bookings(status);",
