@@ -651,7 +651,8 @@
       width: 540px;
       max-width: 95vw;
       box-shadow: 0 20px 60px rgba(0, 0, 0, 0.25);
-      overflow: hidden
+      overflow: hidden;
+      transition: transform 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
     }
 
     .modal-header {
@@ -942,9 +943,60 @@
       background: var(--border);
     }
 
+    /* RESPONSIVE DESIGN - MOBILE DRAWER & TWEAKS */
+    .menu-toggle {
+      display: none;
+    }
+    .sidebar-overlay {
+      display: none;
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100vw;
+      height: 100vh;
+      background: rgba(15, 23, 42, 0.4);
+      backdrop-filter: blur(4px);
+      -webkit-backdrop-filter: blur(4px);
+      z-index: 9998;
+    }
+    .sidebar-overlay.active {
+      display: block;
+    }
+
     @media(max-width:900px) {
+      .menu-toggle {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        background: none;
+        border: none;
+        font-size: 1.5rem;
+        cursor: pointer;
+        color: var(--text);
+        margin-right: 12px;
+        width: 38px;
+        height: 38px;
+        border-radius: 8px;
+        transition: background 0.2s;
+      }
+      .menu-toggle:hover {
+        background: var(--bg);
+      }
+      
       .sidebar {
-        width: 60px
+        position: fixed;
+        top: 0;
+        left: 0;
+        height: 100vh;
+        width: 250px !important;
+        transform: translateX(-100%);
+        transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        z-index: 9999;
+        box-shadow: 4px 0 15px rgba(0,0,0,0.15);
+      }
+      
+      .sidebar.open {
+        transform: translateX(0);
       }
 
       .sidebar-logo span,
@@ -953,21 +1005,82 @@
       .admin-role,
       .sidebar-label,
       .nav-badge {
-        display: none
+        display: inline-block !important;
+      }
+
+      .nav-badge {
+        display: inline-flex !important;
+        margin-left: auto;
       }
 
       .sidebar-logo,
       .nav-item {
-        justify-content: center;
-        padding: 0.85rem
+        justify-content: flex-start !important;
+        padding: 0.65rem 0.75rem !important;
+      }
+      .sidebar-logo {
+        padding: 1.5rem 1.25rem 1.25rem !important;
       }
 
       .stats-grid {
-        grid-template-columns: 1fr 1fr
+        grid-template-columns: 1fr 1fr;
       }
 
       .bottom-grid {
-        grid-template-columns: 1fr
+        grid-template-columns: 1fr;
+      }
+      
+      .topbar {
+        padding: 0 1.25rem;
+      }
+      
+      .content {
+        padding: 1.25rem;
+      }
+    }
+
+    @media(max-width:576px) {
+      .stats-grid {
+        grid-template-columns: 1fr;
+      }
+      .topbar-right {
+        gap: 0.5rem;
+      }
+      .api-status {
+        padding: 4px 8px;
+        font-size: 0.65rem;
+      }
+      .topbar-title {
+        font-size: 1rem;
+      }
+      .btn-refresh {
+        padding: 6px 10px;
+        font-size: 0.75rem;
+      }
+      #last-updated {
+        display: none;
+      }
+      
+      .modal-overlay.open {
+        align-items: flex-end;
+      }
+      .modal {
+        width: 100%;
+        max-width: 100%;
+        border-radius: 20px 20px 0 0;
+        margin: 0;
+        transform: translateY(100%);
+        max-height: 85vh;
+      }
+      .modal-overlay.open .modal {
+        transform: translateY(0);
+      }
+      .modal-body {
+        padding: 1.25rem;
+        overflow-y: auto;
+      }
+      .drawer {
+        max-width: 100% !important;
       }
     }
 
@@ -1450,6 +1563,64 @@
     .dark-theme .nav-item.active {
       background: rgba(255,255,255,0.05);
     }
+
+    /* BRANDS & MODELS LAYOUT */
+    .brands-models-layout {
+      display: grid;
+      grid-template-columns: 1fr 2fr;
+      gap: 1.5rem;
+    }
+    
+    .add-model-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr 1.5fr auto;
+      gap: 10px;
+    }
+    
+    /* ADD SERVICE LAYOUT */
+    .add-service-grid {
+      display: grid;
+      grid-template-columns: 1.5fr 1.5fr 1.5fr 1fr auto;
+      gap: 12px;
+      align-items: end;
+    }
+
+    @media (max-width: 900px) {
+      .brands-models-layout {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    @media (max-width: 768px) {
+      .add-model-grid {
+        grid-template-columns: 1fr;
+        gap: 12px;
+      }
+      .add-model-grid .status-select {
+        padding: 0.8rem 1rem;
+        font-size: 0.95rem;
+      }
+      .add-model-grid button {
+        height: 44px;
+        font-size: 0.95rem;
+        margin-top: 5px;
+      }
+      
+      .add-service-grid {
+        grid-template-columns: 1fr;
+        gap: 16px;
+        align-items: stretch;
+      }
+      .add-service-grid .status-select {
+        padding: 0.8rem 1rem;
+        font-size: 0.95rem;
+      }
+      .add-service-grid button {
+        height: 44px;
+        font-size: 0.95rem;
+        margin-top: 8px;
+      }
+    }
   </style>
 </head>
 
@@ -1457,7 +1628,15 @@
 
   <!-- API CONFIG — change this to your Flask server URL -->
   <script>
-    const API_BASE = localStorage.getItem('TEKZIVO_API_BASE') || 'http://localhost:5000/api';
+    const getApiBase = () => {
+      const saved = localStorage.getItem('TEKZIVO_API_BASE');
+      if (saved) return saved;
+      return window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1'
+        ? 'http://localhost:5000/api'
+        : 'https://karthikeyankasi.pythonanywhere.com/api';
+    };
+    const API_BASE = getApiBase();
+
     if (localStorage.getItem('TEKZIVO_THEME') === 'dark') {
       document.body.classList.add('dark-theme');
     }
@@ -1507,6 +1686,7 @@
   <!-- MAIN -->
   <div class="main">
     <div class="topbar">
+      <button class="menu-toggle" onclick="toggleSidebar()" aria-label="Toggle Sidebar">☰</button>
       <div class="topbar-title" id="page-title">Dashboard</div>
       <div class="topbar-right">
         <div class="api-status offline" id="api-badge">⏳ Connecting...</div>
@@ -1591,28 +1771,43 @@
     }
 
     // ─── DASHBOARD ────────────────────────────
-    async function renderDashboard() {
+    async function renderDashboard(useCacheOnly = false) {
       document.getElementById('page-title').textContent = 'Dashboard';
       const content = document.getElementById('main-content');
-      content.innerHTML = '<div style="text-align:center;padding:3rem;color:var(--muted)">Loading stats...</div>';
+      
+      let stats = statsCache;
+      const hasCache = Object.keys(statsCache).length > 0;
 
-      let stats = {
-        totals: { total: 0, pending: 0, confirmed: 0, in_progress: 0, completed: 0, cancelled: 0 },
-        revenue: 0, avg_rating: 0, top_technicians: [], daily_bookings: []
-      };
+      if (!hasCache) {
+        content.innerHTML = '<div style="text-align:center;padding:3rem;color:var(--muted)">Loading stats...</div>';
+      } else {
+        renderDashboardUI(stats);
+      }
+
+      if (useCacheOnly && hasCache) {
+        return;
+      }
 
       try {
         const res = await apiFetch('/dashboard/stats');
         stats = res.data;
         statsCache = stats;
         const pb = document.getElementById('pending-badge');
-        if (pb) pb.textContent = stats.totals.pending || '0';
-      } catch {
-        // Use cached or defaults
-        if (Object.keys(statsCache).length) stats = statsCache;
+        if (pb) pb.textContent = stats.totals?.pending || '0';
+        
+        if (currentSection === 'dashboard') {
+          renderDashboardUI(stats);
+        }
+      } catch (e) {
+        console.error("Failed to refresh dashboard stats:", e);
       }
+    }
 
-      const t = stats.totals;
+    function renderDashboardUI(stats) {
+      const content = document.getElementById('main-content');
+      if (!content) return;
+
+      const t = stats.totals || { total: 0, pending: 0, confirmed: 0, in_progress: 0, completed: 0, cancelled: 0 };
       content.innerHTML = `
     <!-- STATS -->
     <div class="stats-grid">
@@ -1695,7 +1890,11 @@
       </div>
     </div>`;
 
-      loadBookings();
+      if (bookingsCache.length > 0) {
+        filterAndRenderTable();
+      } else {
+        loadBookings();
+      }
       updateTimestamp();
     }
 
@@ -2389,7 +2588,7 @@
       }
 
       content.innerHTML = `
-      <div style="display:grid; grid-template-columns: 1fr 2fr; gap: 1.5rem;">
+      <div class="brands-models-layout">
         
         <!-- BRANDS PANEL -->
         <div class="panel">
@@ -2426,7 +2625,7 @@
             <div class="panel-title">Device Models</div>
           </div>
           <div style="padding:1.25rem; border-bottom:1px solid var(--border);">
-             <div style="display:grid; grid-template-columns: 1fr 1fr 1.5fr auto; gap:10px;">
+             <div class="add-model-grid">
                 <select id="new-model-brand" class="status-select">
                   <option value="">Select Brand...</option>
                   ${brands.map(b => `<option value="${b.id}">${b.name}</option>`).join('')}
@@ -2541,7 +2740,7 @@
             <div class="panel-title">Add New Service / Product</div>
           </div>
           <div style="padding:1.25rem;">
-             <div style="display:grid; grid-template-columns: 1.5fr 1.5fr 1.5fr 1fr auto; gap:12px; align-items: end;">
+             <div class="add-service-grid">
                 <div>
                    <label style="font-size:0.75rem; font-weight:600; color:var(--muted); display:block; margin-bottom:4px;">Service Name</label>
                    <input type="text" id="new-svc-name" class="status-select" placeholder="e.g. Screen Replacement">
@@ -2873,12 +3072,7 @@
         const res = await apiFetch('/service-areas');
         serviceAreasCache = res.data || [];
       } catch (e) {
-        serviceAreasCache = [
-          { id: 'sa1', pincode: '600001', city: 'Chennai', state: 'Tamil Nadu' },
-          { id: 'sa2', pincode: '600002', city: 'Chennai', state: 'Tamil Nadu' },
-          { id: 'sa3', pincode: '560001', city: 'Bangalore', state: 'Karnataka' },
-          { id: 'sa4', pincode: '400001', city: 'Mumbai', state: 'Maharashtra' }
-        ];
+        serviceAreasCache = [];
       }
 
       renderPincodesList(serviceAreasCache);
@@ -2972,7 +3166,7 @@
     }
 
     function loadDeveloperSettings() {
-      const localBaseUrl = localStorage.getItem('TEKZIVO_API_BASE') || 'http://localhost:5000/api';
+      const localBaseUrl = localStorage.getItem('TEKZIVO_API_BASE') || getApiBase();
       const localTheme = localStorage.getItem('TEKZIVO_THEME') || 'light';
       
       document.getElementById('dev-api-url').value = localBaseUrl;
@@ -3020,6 +3214,14 @@
       currentSection = section;
       document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
       if (el) el.classList.add('active');
+
+      // Close mobile sidebar if open
+      const sidebar = document.querySelector('.sidebar');
+      if (sidebar && sidebar.classList.contains('open')) {
+        sidebar.classList.remove('open');
+        const overlay = document.querySelector('.sidebar-overlay');
+        if (overlay) overlay.classList.remove('active');
+      }
       currentPage = 1;
       if (section === 'dashboard') renderDashboard();
       if (section === 'bookings') { renderBookingsKanban(); }
@@ -3084,16 +3286,7 @@
     }
 
     function getDemoData() {
-      return [
-        { id: 'd1', booking_ref: 'TKZ-2024-00001', customer: { name: 'Priya Ramesh', phone: '+91 98765 43210' }, service: { name: 'Screen Replacement', device_type: 'Smartphone' }, preferred_date: '2024-04-18', time_slot: '10 AM – 12 PM', estimated_price: 1800, status: 'Pending', pincode: '600001', issue_description: 'Cracked screen', booked_at: '2024-04-17T10:00:00' },
-        { id: 'd2', booking_ref: 'TKZ-2024-00002', customer: { name: 'Arjun Kumar', phone: '+91 87654 32109' }, service: { name: 'AC Service', device_type: 'Air Conditioner' }, preferred_date: '2024-04-18', time_slot: '12 PM – 2 PM', estimated_price: 999, status: 'Confirmed', pincode: '560001', issue_description: 'Not cooling', booked_at: '2024-04-17T11:00:00' },
-        { id: 'd3', booking_ref: 'TKZ-2024-00003', customer: { name: 'Sneha Mehta', phone: '+91 76543 21098' }, service: { name: 'Laptop Repair', device_type: 'Laptop' }, preferred_date: '2024-04-17', time_slot: '2 PM – 4 PM', estimated_price: 2500, status: 'Completed', pincode: '400001', issue_description: 'Not turning on', booked_at: '2024-04-16T09:00:00' },
-        { id: 'd4', booking_ref: 'TKZ-2024-00004', customer: { name: 'Rahul Singh', phone: '+91 65432 10987' }, service: { name: 'TV Repair', device_type: 'LED TV' }, preferred_date: '2024-04-17', time_slot: '10 AM – 12 PM', estimated_price: 1500, status: 'In Progress', pincode: '600001', issue_description: 'No display', booked_at: '2024-04-16T08:00:00' },
-        { id: 'd5', booking_ref: 'TKZ-2024-00005', customer: { name: 'Divya Nair', phone: '+91 54321 09876' }, service: { name: 'Fridge Repair', device_type: 'Refrigerator' }, preferred_date: '2024-04-16', time_slot: '4 PM – 6 PM', estimated_price: 1200, status: 'Completed', pincode: '682001', issue_description: 'Not cooling', booked_at: '2024-04-15T14:00:00' },
-        { id: 'd6', booking_ref: 'TKZ-2024-00006', customer: { name: 'Karthik R', phone: '+91 43210 98765' }, service: { name: 'Battery Replacement', device_type: 'Smartphone' }, preferred_date: '2024-04-16', time_slot: '12 PM – 2 PM', estimated_price: 799, status: 'Cancelled', pincode: '600002', issue_description: 'Battery draining', booked_at: '2024-04-15T10:00:00' },
-        { id: 'd7', booking_ref: 'TKZ-2024-00007', customer: { name: 'Meena S', phone: '+91 32109 87654' }, service: { name: 'WM Repair', device_type: 'Washing Machine' }, preferred_date: '2024-04-15', time_slot: '10 AM – 12 PM', estimated_price: 1100, status: 'Completed', pincode: '600003', issue_description: 'Not draining', booked_at: '2024-04-14T09:00:00' },
-        { id: 'd8', booking_ref: 'TKZ-2024-00008', customer: { name: 'Suresh P', phone: '+91 21098 76543' }, service: { name: 'Keyboard Repair', device_type: 'Laptop' }, preferred_date: '2024-04-15', time_slot: '2 PM – 4 PM', estimated_price: 1350, status: 'Pending', pincode: '560002', issue_description: 'Keys not working', booked_at: '2024-04-14T11:00:00' },
-      ];
+      return [];
     }
 
     function showToast(msg) {
@@ -3153,17 +3346,31 @@
         const res = await apiFetch('/technicians');
         techniciansCache = res.data || [];
       } catch {
-        techniciansCache = [
-          { id: 't1', name: 'Ramesh Kumar', specialization: 'Smartphone', area_pincode: '600001', rating: 4.8, total_jobs: 24, is_available: true },
-          { id: 't2', name: 'Arvind Swamy', specialization: 'Laptop', area_pincode: '560001', rating: 4.5, total_jobs: 18, is_available: true },
-          { id: 't3', name: 'Vijay Sethu', specialization: 'LED TV', area_pincode: '600001', rating: 4.9, total_jobs: 32, is_available: false }
-        ];
+        techniciansCache = [];
       }
     }
 
     document.getElementById('booking-modal').addEventListener('click', function (e) {
       if (e.target === this) closeModal();
     });
+
+    function toggleSidebar() {
+      const sidebar = document.querySelector('.sidebar');
+      const overlay = document.querySelector('.sidebar-overlay') || createSidebarOverlay();
+      sidebar.classList.toggle('open');
+      overlay.classList.toggle('active');
+    }
+
+    function createSidebarOverlay() {
+      const overlay = document.createElement('div');
+      overlay.className = 'sidebar-overlay';
+      overlay.onclick = () => {
+        document.querySelector('.sidebar').classList.remove('open');
+        overlay.classList.remove('active');
+      };
+      document.body.appendChild(overlay);
+      return overlay;
+    }
 
     // ─── INIT ─────────────────────────────────
     (async function () {
@@ -3177,13 +3384,46 @@
         document.body.classList.remove('dark-theme');
       }
 
-      await checkApiHealth();
-      await loadTechniciansCache();
-      renderDashboard();
-      // Auto-refresh every 60 seconds
-      setInterval(() => {
-        checkApiHealth();
-        if (currentSection === 'dashboard' || currentSection === 'bookings') loadBookings();
+      // Try fast bootstrap first
+      try {
+        const res = await apiFetch('/admin/bootstrap');
+        if (res && res.success && res.data) {
+          const data = res.data;
+          document.getElementById('api-badge').textContent = '✅ API Online';
+          document.getElementById('api-badge').className = 'api-status online';
+          
+          techniciansCache = data.technicians || [];
+          statsCache = data.stats || {};
+          bookingsCache = data.bookings || [];
+          
+          const pb = document.getElementById('pending-badge');
+          if (pb) pb.textContent = statsCache.totals?.pending || '0';
+          
+          await renderDashboard(true);
+        } else {
+          throw new Error("Invalid bootstrap data");
+        }
+      } catch (e) {
+        console.warn("Combined admin bootstrap failed, falling back to legacy sequential fetches...", e);
+        await checkApiHealth();
+        await loadTechniciansCache();
+        await renderDashboard();
+      }
+
+      // Auto-refresh every 60 seconds (non-blocking)
+      setInterval(async () => {
+        const healthy = await checkApiHealth();
+        if (healthy && (currentSection === 'dashboard' || currentSection === 'bookings')) {
+          try {
+            const statsRes = await apiFetch('/dashboard/stats');
+            if (statsRes.success) {
+              statsCache = statsRes.data;
+              const pb = document.getElementById('pending-badge');
+              if (pb) pb.textContent = statsCache.totals?.pending || '0';
+            }
+          } catch (err) { console.error(err); }
+          loadBookings();
+        }
       }, 60000);
     })();
   </script>

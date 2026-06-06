@@ -34,23 +34,53 @@ load_dotenv()
 # ─────────────────────────────────────────
 # APP SETUP
 # ─────────────────────────────────────────
-app = Flask(__name__, static_folder=".", static_url_path="")
+app = Flask(__name__, static_folder="frontend", static_url_path="")
 CORS(app)  # Allow requests from your HTML frontend
 
-DB_USER     = os.getenv("DB_USER",     "root")
-DB_PASSWORD = os.getenv("DB_PASSWORD", "password")
-DB_HOST     = os.getenv("DB_HOST",     "localhost")
-DB_PORT     = os.getenv("DB_PORT",     "3306")
-DB_NAME     = os.getenv("DB_NAME",     "tekzivo")
+# Use SQLite exclusively (Free, Serverless & Config-Free for both local & PythonAnywhere)
+db_path = os.path.join(os.path.dirname(__file__), "tekzivo.db")
+app.config["SQLALCHEMY_DATABASE_URI"] = f"sqlite:///{db_path}"
 
-from urllib.parse import quote_plus
-app.config["SQLALCHEMY_DATABASE_URI"] = (
-    f"mysql+pymysql://{DB_USER}:{quote_plus(DB_PASSWORD)}@{DB_HOST}:{DB_PORT}/{DB_NAME}"
-)
 app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
 app.config["SECRET_KEY"] = os.getenv("SECRET_KEY", "tekzivo-secret-key")
 
 db = SQLAlchemy(app)
+
+import gzip
+import io
+
+# ─────────────────────────────────────────
+# GZIP COMPRESSION MIDDLEWARE
+# ─────────────────────────────────────────
+@app.after_request
+def compress(response):
+    accept_encoding = request.headers.get("Accept-Encoding", "")
+    if "gzip" not in accept_encoding.lower():
+        return response
+
+    if "Content-Encoding" in response.headers:
+        return response
+
+    content_type = response.headers.get("Content-Type", "")
+    if not any(t in content_type for t in ["json", "html", "css", "javascript"]):
+        return response
+
+    response_data = response.get_data()
+    if len(response_data) < 500:
+        return response
+
+    gzip_buffer = io.BytesIO()
+    with gzip.GzipFile(mode="wb", fileobj=gzip_buffer) as gzip_file:
+        gzip_file.write(response_data)
+
+    compressed_data = gzip_buffer.getvalue()
+    if len(compressed_data) >= len(response_data):
+        return response
+
+    response.set_data(compressed_data)
+    response.headers["Content-Encoding"] = "gzip"
+    response.headers["Content-Length"] = len(compressed_data)
+    return response
 
 
 # ─────────────────────────────────────────
@@ -74,7 +104,7 @@ class Service(db.Model):
     __tablename__ = "services"
     id            = db.Column(db.String(36),  primary_key=True, default=lambda: str(uuid.uuid4()))
     name          = db.Column(db.String(150), nullable=False)
-    device_type   = db.Column(db.String(100), nullable=False)
+    device_type   = db.Column(db.String(100), nullable=False, index=True)
     issue_type    = db.Column(db.String(150), nullable=False)
     base_price    = db.Column(db.Numeric(10, 2), nullable=False, default=0)
     duration_mins = db.Column(db.Integer,     nullable=False, default=60)
@@ -93,7 +123,7 @@ class Service(db.Model):
 class Customer(db.Model):
     __tablename__ = "customers"
     id         = db.Column(db.String(36),  primary_key=True, default=lambda: str(uuid.uuid4()))
-    name       = db.Column(db.String(150), nullable=False)
+    name       = db.Column(db.String(150), nullable=False, index=True)
     phone      = db.Column(db.String(15),  nullable=False, unique=True)
     email      = db.Column(db.String(200), nullable=True)
     pincode    = db.Column(db.String(10),  nullable=False)
@@ -139,20 +169,20 @@ class Booking(db.Model):
     __tablename__ = "bookings"
     id                = db.Column(db.String(36),  primary_key=True, default=lambda: str(uuid.uuid4()))
     booking_ref       = db.Column(db.String(20),  nullable=False, unique=True)
-    customer_id       = db.Column(db.String(36),  db.ForeignKey("customers.id"),   nullable=False)
-    service_id        = db.Column(db.String(36),  db.ForeignKey("services.id"),    nullable=False)
-    technician_id     = db.Column(db.String(36),  db.ForeignKey("technicians.id"), nullable=True)
+    customer_id       = db.Column(db.String(36),  db.ForeignKey("customers.id"),   nullable=False, index=True)
+    service_id        = db.Column(db.String(36),  db.ForeignKey("services.id"),    nullable=False, index=True)
+    technician_id     = db.Column(db.String(36),  db.ForeignKey("technicians.id"), nullable=True, index=True)
     status            = db.Column(db.Enum("Pending","Confirmed","In Progress","Completed","Cancelled"),
-                                  nullable=False, default="Pending")
-    preferred_date    = db.Column(db.Date,        nullable=False)
+                                  nullable=False, default="Pending", index=True)
+    preferred_date    = db.Column(db.Date,        nullable=False, index=True)
     time_slot         = db.Column(db.String(30),  nullable=False)
     issue_description = db.Column(db.Text,        nullable=True)
     estimated_price   = db.Column(db.Numeric(10, 2), nullable=False, default=0)
     final_price       = db.Column(db.Numeric(10, 2), nullable=True)
     address           = db.Column(db.Text,        nullable=True)
-    pincode           = db.Column(db.String(10),  nullable=False)
+    pincode           = db.Column(db.String(10),  nullable=False, index=True)
     notes             = db.Column(db.Text,        nullable=True)
-    booked_at         = db.Column(db.DateTime,    default=datetime.utcnow)
+    booked_at         = db.Column(db.DateTime,    default=datetime.utcnow, index=True)
     updated_at        = db.Column(db.DateTime,    default=datetime.utcnow, onupdate=datetime.utcnow)
 
     service    = db.relationship("Service",    backref="bookings", lazy=True)
@@ -211,9 +241,9 @@ class Brand(db.Model):
 class DeviceModel(db.Model):
     __tablename__ = "device_models"
     id          = db.Column(db.String(36),  primary_key=True, default=lambda: str(uuid.uuid4()))
-    brand_id    = db.Column(db.String(36),  db.ForeignKey("brands.id"), nullable=False)
+    brand_id    = db.Column(db.String(36),  db.ForeignKey("brands.id"), nullable=False, index=True)
     name        = db.Column(db.String(150), nullable=False)
-    device_type = db.Column(db.String(100), nullable=False)
+    device_type = db.Column(db.String(100), nullable=False, index=True)
     created_at  = db.Column(db.DateTime,    default=datetime.utcnow)
 
     brand = db.relationship("Brand", backref="models", lazy=True)
@@ -616,11 +646,10 @@ def get_technicians():
 
 
 # ─────────────────────────────────────────
-# ROUTES — DASHBOARD STATS
+# ROUTES — DASHBOARD STATS & BOOTSTRAPPING
 # ─────────────────────────────────────────
 
-@app.route("/api/dashboard/stats", methods=["GET"])
-def dashboard_stats():
+def _get_dashboard_stats_raw():
     total      = Booking.query.count()
     pending    = Booking.query.filter_by(status="Pending").count()
     confirmed  = Booking.query.filter_by(status="Confirmed").count()
@@ -629,35 +658,28 @@ def dashboard_stats():
     cancelled  = Booking.query.filter_by(status="Cancelled").count()
 
     # Revenue: sum of completed bookings
-    rev_result = db.session.execute(
-        text("SELECT COALESCE(SUM(estimated_price),0) FROM bookings WHERE status='Completed'")
-    ).scalar()
-    revenue = float(rev_result or 0)
+    from sqlalchemy import func
+    revenue = db.session.query(func.coalesce(func.sum(Booking.estimated_price), 0)).filter(Booking.status == 'Completed').scalar()
+    revenue = float(revenue)
 
     # Avg rating across technicians
-    avg_rating = db.session.execute(
-        text("SELECT COALESCE(AVG(rating),0) FROM technicians WHERE is_active=1")
-    ).scalar()
+    avg_rating = db.session.query(func.coalesce(func.avg(Technician.rating), 0)).filter(Technician.is_active == True).scalar()
 
     # Top technicians
-    top_techs = db.session.execute(text("""
-        SELECT t.name, t.specialization, t.rating, t.total_jobs
-        FROM technicians t
-        WHERE t.is_active = 1
-        ORDER BY t.total_jobs DESC
-        LIMIT 5
-    """)).fetchall()
+    top_techs = db.session.query(
+        Technician.name, Technician.specialization, Technician.rating, Technician.total_jobs
+    ).filter(Technician.is_active == True).order_by(Technician.total_jobs.desc()).limit(5).all()
 
-    # Bookings per day (last 7 days)
+    # Bookings per day (last 7 days) — SQLite query
     daily = db.session.execute(text("""
-        SELECT DATE(booked_at) AS day, COUNT(*) AS count
+        SELECT date(booked_at) AS day, COUNT(*) AS count
         FROM bookings
-        WHERE booked_at >= DATE_SUB(NOW(), INTERVAL 7 DAY)
-        GROUP BY DATE(booked_at)
+        WHERE booked_at >= date('now', '-7 days')
+        GROUP BY date(booked_at)
         ORDER BY day ASC
     """)).fetchall()
 
-    return ok({
+    return {
         "totals": {
             "total": total, "pending": pending, "confirmed": confirmed,
             "in_progress": inprogress, "completed": completed, "cancelled": cancelled
@@ -672,7 +694,62 @@ def dashboard_stats():
         "daily_bookings": [
             {"date": str(r[0]), "count": r[1]} for r in daily
         ]
-    })
+    }
+
+
+@app.route("/api/dashboard/stats", methods=["GET"])
+def dashboard_stats():
+    try:
+        return ok(_get_dashboard_stats_raw())
+    except Exception as e:
+        return err(f"Failed to load dashboard stats: {str(e)}", 500)
+
+
+@app.route("/api/bootstrap", methods=["GET"])
+def api_bootstrap():
+    try:
+        # Load settings
+        settings = load_settings()
+        
+        # Load brands
+        brands = [b.to_dict() for b in Brand.query.order_by(Brand.name).all()]
+        
+        # Load models
+        models = [m.to_dict() for m in DeviceModel.query.order_by(DeviceModel.name).all()]
+        
+        # Load services
+        services = [s.to_dict() for s in Service.query.filter_by(is_active=True).all()]
+        
+        return ok({
+            "settings": settings,
+            "brands": brands,
+            "models": models,
+            "services": services
+        })
+    except Exception as e:
+        return err(f"Bootstrap failed: {str(e)}", 500)
+
+
+@app.route("/api/admin/bootstrap", methods=["GET"])
+def api_admin_bootstrap():
+    try:
+        # Load technicians
+        techs = [t.to_dict() for t in Technician.query.filter_by(is_active=True).all()]
+        
+        # Load stats
+        stats = _get_dashboard_stats_raw()
+        
+        # Load bookings (first page/recent ones, equivalent to get_bookings with per_page=200)
+        bookings_query = Booking.query.order_by(Booking.booked_at.desc()).limit(200).all()
+        bookings = [b.to_dict() for b in bookings_query]
+        
+        return ok({
+            "technicians": techs,
+            "stats": stats,
+            "bookings": bookings
+        })
+    except Exception as e:
+        return err(f"Admin bootstrap failed: {str(e)}", 500)
 
 
 # ─────────────────────────────────────────
@@ -836,19 +913,87 @@ def seed_default_brands_and_models():
     db.session.commit()
     print("[SUCCESS] Seeded default brands and models into the database.")
 
+def seed_default_services_and_areas():
+    # 1. Seed Service Areas
+    if not ServiceArea.query.first():
+        areas = [
+            ServiceArea(pincode="600001", city="Chennai", state="Tamil Nadu"),
+            ServiceArea(pincode="600002", city="Chennai", state="Tamil Nadu"),
+            ServiceArea(pincode="560001", city="Bangalore", state="Karnataka"),
+            ServiceArea(pincode="400001", city="Mumbai", state="Maharashtra"),
+            ServiceArea(pincode="682001", city="Kochi", state="Kerala"),
+            ServiceArea(pincode="500001", city="Hyderabad", state="Telangana")
+        ]
+        db.session.bulk_save_objects(areas)
+        print("[SEED] Service areas seeded.")
+
+    # 2. Seed Services Catalog
+    if not Service.query.first():
+        services = [
+            Service(name="Screen Replacement", device_type="Smartphone", issue_type="Cracked Screen", base_price=1800.00, duration_mins=60),
+            Service(name="Battery Replacement", device_type="Smartphone", issue_type="Battery Draining", base_price=799.00, duration_mins=45),
+            Service(name="Charging Port Fix", device_type="Smartphone", issue_type="Not Charging", base_price=650.00, duration_mins=45),
+            Service(name="Laptop Screen Fix", device_type="Laptop", issue_type="Screen Damage", base_price=2500.00, duration_mins=90),
+            Service(name="Keyboard Repair", device_type="Laptop", issue_type="Keys Not Working", base_price=1350.00, duration_mins=60),
+            Service(name="Motherboard Repair", device_type="Laptop", issue_type="Not Turning On", base_price=3500.00, duration_mins=120),
+            Service(name="TV Panel Repair", device_type="LED TV", issue_type="No Display", base_price=1500.00, duration_mins=90),
+            Service(name="TV Sound Fix", device_type="LED TV", issue_type="Sound Issue", base_price=800.00, duration_mins=60)
+        ]
+        db.session.bulk_save_objects(services)
+        print("[SEED] Services catalog seeded.")
+
+    # 3. Seed Technicians
+    if not Technician.query.first():
+        technicians = [
+            Technician(name="Rajan M", phone="+91 98765 11111", specialization="Mobile & Laptop", area_pincode="600001", rating=4.9, total_jobs=42),
+            Technician(name="Vijay K", phone="+91 98765 22222", specialization="AC & Appliances", area_pincode="560001", rating=4.8, total_jobs=38),
+            Technician(name="Kumar R", phone="+91 98765 33333", specialization="TV & Electronics", area_pincode="400001", rating=4.7, total_jobs=31)
+        ]
+        db.session.bulk_save_objects(technicians)
+        print("[SEED] Technicians seeded.")
+
+    db.session.commit()
+    print("[SUCCESS] Seeded default services, areas, and technicians into the database.")
+
 @app.route("/")
 @app.route("/booking")
 def index():
-    return app.send_static_file("tekzivo.html")
+    return app.send_static_file("index.html")
 
 @app.route("/admin")
 def admin():
-    return app.send_static_file("tekzivo-admin.html")
+    return app.send_static_file("admin/index.html")
 
+
+def create_indexes():
+    # SQLite-specific raw CREATE INDEX statements for robustness
+    statements = [
+        "CREATE INDEX IF NOT EXISTS idx_bookings_status ON bookings(status);",
+        "CREATE INDEX IF NOT EXISTS idx_bookings_booked_at ON bookings(booked_at);",
+        "CREATE INDEX IF NOT EXISTS idx_bookings_customer_id ON bookings(customer_id);",
+        "CREATE INDEX IF NOT EXISTS idx_bookings_technician_id ON bookings(technician_id);",
+        "CREATE INDEX IF NOT EXISTS idx_bookings_service_id ON bookings(service_id);",
+        "CREATE INDEX IF NOT EXISTS idx_bookings_pincode ON bookings(pincode);",
+        "CREATE INDEX IF NOT EXISTS idx_customers_name ON customers(name);",
+        "CREATE INDEX IF NOT EXISTS idx_services_device_type ON services(device_type);",
+        "CREATE INDEX IF NOT EXISTS idx_device_models_brand_id ON device_models(brand_id);",
+        "CREATE INDEX IF NOT EXISTS idx_device_models_device_type ON device_models(device_type);"
+    ]
+    for stmt in statements:
+        try:
+            db.session.execute(text(stmt))
+        except Exception as e:
+            print(f"[INDEX ERROR] Failed to create index: {e}")
+    db.session.commit()
+
+# Ensure tables are created and indexed on import / startup
+with app.app_context():
+    db.create_all()
+    create_indexes()
 
 if __name__ == "__main__":
     with app.app_context():
-        db.create_all()
         seed_default_brands_and_models()
+        seed_default_services_and_areas()
     print("[SUCCESS] Tekzivo API running at http://localhost:5000")
     app.run(debug=True, host="0.0.0.0", port=5000)

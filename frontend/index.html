@@ -57,6 +57,14 @@
         </div>
     </nav>
 
+    <!-- Mobile Horizontal Category Scroller -->
+    <div class="mobile-category-scroll">
+        <div class="category-chip active" onclick="showCategory('All', this)">All Services</div>
+        <div class="category-chip" onclick="showCategory('Smartphone', this)">📱 Smartphones</div>
+        <div class="category-chip" onclick="showCategory('Laptop', this)">💻 Laptops</div>
+        <div class="category-chip" onclick="showCategory('LED TV', this)">📺 LED TVs</div>
+    </div>
+
     <!-- Layout Wrapper -->
     <div class="container layout-wrapper">
         
@@ -141,8 +149,9 @@
     </footer>
 
     <!-- Checkout Modal -->
-    <div class="modal-overlay" id="checkout-modal">
+    <div class="modal-overlay" id="checkout-modal" onclick="if(event.target === this) closeModal()">
         <div class="modal-content">
+            <div class="modal-handle"></div>
             <div class="modal-header">
                 <h3>Book Service / Checkout</h3>
                 <button class="close-modal" onclick="closeModal()">×</button>
@@ -233,7 +242,14 @@
     </div>
 
     <script>
-        const API_BASE = localStorage.getItem('TEKZIVO_API_BASE') || 'http://localhost:5000/api';
+        const getApiBase = () => {
+            const saved = localStorage.getItem('TEKZIVO_API_BASE');
+            if (saved) return saved;
+            return window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1'
+                ? 'http://localhost:5000/api'
+                : 'https://karthikeyankasi.pythonanywhere.com/api';
+        };
+        const API_BASE = getApiBase();
         
         const DEVICE_ISSUES = {
             'Smartphone': {
@@ -382,6 +398,47 @@
 
         // Load data on start
         (async function() {
+            try {
+                const res = await fetch(`${API_BASE}/bootstrap`).then(r => r.json());
+                if (res && res.success && res.data) {
+                    const data = res.data;
+                    
+                    // 1. Apply Settings
+                    if (data.settings) {
+                        activeSettings = data.settings;
+                        applySettingsToUI();
+                    }
+                    
+                    // 2. Load Brands and Models
+                    allBrands = data.brands || [];
+                    allModels = data.models || [];
+                    
+                    // 3. Load Services Catalog
+                    if (data.services && data.services.length > 0) {
+                        const newIssues = {};
+                        data.services.forEach(s => {
+                            if (!newIssues[s.device_type]) {
+                                newIssues[s.device_type] = {};
+                            }
+                            newIssues[s.device_type][s.name] = {
+                                price: s.base_price,
+                                icon: getServiceIcon(s.device_type, s.name),
+                                id: s.id
+                            };
+                        });
+                        for (const key in DEVICE_ISSUES) {
+                            delete DEVICE_ISSUES[key];
+                        }
+                        Object.assign(DEVICE_ISSUES, newIssues);
+                    }
+                    renderProducts();
+                    return; // Bootstrapped successfully in one call!
+                }
+            } catch (e) {
+                console.warn("Fast bootstrap failed, falling back to legacy sequential calls...", e);
+            }
+
+            // Fallback to sequential individual API calls if bootstrap fails
             await fetchSettings();
             await fetchBrandsAndModels();
             await fetchServices();
@@ -443,22 +500,43 @@
         function showCategory(category, element) {
             renderProducts(category);
             
-            // Remove active classes from all navigation links
-            document.querySelectorAll('.main-nav li a, .category-menu li a').forEach(el => {
+            // Remove active classes from all navigation links and chips
+            document.querySelectorAll('.main-nav li a, .category-menu li a, .category-chip').forEach(el => {
                 el.classList.remove('active');
             });
             
             if (element) {
                 element.classList.add('active');
-            } else {
-                // Try matching based on category text
+                
+                // Sync mobile scroller active state if clicked from sidebar/navbar
+                const chips = document.querySelectorAll('.category-chip');
+                if (chips.length > 0) {
+                    chips.forEach(chip => {
+                        const chipText = chip.textContent.toLowerCase();
+                        if (category === 'All' && chipText.includes('all')) chip.classList.add('active');
+                        else if (category === 'Smartphone' && (chipText.includes('smart') || chipText.includes('phone') || chipText.includes('mobile'))) chip.classList.add('active');
+                        else if (category === 'Laptop' && chipText.includes('lap')) chip.classList.add('active');
+                        else if (category === 'LED TV' && (chipText.includes('led') || chipText.includes('tv'))) chip.classList.add('active');
+                    });
+                }
+                
+                // Sync navbar and sidebar active classes if clicked from scroller chips
                 document.querySelectorAll('.main-nav li a, .category-menu li a').forEach(el => {
                     const txt = el.textContent.toLowerCase();
-                    if (category === 'All' && txt.includes('home')) {
+                    if (category === 'All' && (txt.includes('home') || txt.includes('all'))) el.classList.add('active');
+                    else if (category === 'Smartphone' && (txt.includes('smartphone') || txt.includes('mobile'))) el.classList.add('active');
+                    else if (category === 'Laptop' && txt.includes('laptop')) el.classList.add('active');
+                    else if (category === 'LED TV' && (txt.includes('led') || txt.includes('tv'))) el.classList.add('active');
+                });
+            } else {
+                // Try matching based on category text
+                document.querySelectorAll('.main-nav li a, .category-menu li a, .category-chip').forEach(el => {
+                    const txt = el.textContent.toLowerCase();
+                    if (category === 'All' && (txt.includes('home') || txt.includes('all'))) {
                         el.classList.add('active');
-                    } else if (category === 'Smartphone' && (txt.includes('smartphone') || txt.includes('mobile'))) {
+                    } else if (category === 'Smartphone' && (txt.includes('smartphone') || txt.includes('mobile') || txt.includes('smart') || txt.includes('phone'))) {
                         el.classList.add('active');
-                    } else if (category === 'Laptop' && txt.includes('laptop')) {
+                    } else if (category === 'Laptop' && (txt.includes('laptop') || txt.includes('lap'))) {
                         el.classList.add('active');
                     } else if (category === 'LED TV' && (txt.includes('led') || txt.includes('tv'))) {
                         el.classList.add('active');
