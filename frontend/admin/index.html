@@ -1621,6 +1621,56 @@
         margin-top: 8px;
       }
     }
+
+    @media (max-width: 600px) {
+      .settings-tab-bar {
+        flex-direction: column;
+        border-bottom: none;
+        gap: 8px;
+      }
+      .settings-tab {
+        border-bottom: 1px solid var(--border) !important;
+        border-radius: 8px;
+        text-align: left;
+        padding: 0.75rem 1rem;
+        width: 100%;
+      }
+      .settings-tab.active {
+        background: var(--bg);
+        border-color: var(--blue) !important;
+      }
+    }
+
+    @media (max-width: 420px) {
+      .btn-refresh span {
+        display: none;
+      }
+      .btn-refresh {
+        padding: 6px 10px;
+        font-size: 1rem;
+      }
+      .api-status span {
+        display: none;
+      }
+      .api-status {
+        padding: 4px 6px;
+      }
+      .topbar-title {
+        font-size: 0.9rem;
+      }
+      .topbar-right {
+        gap: 0.4rem;
+      }
+      .search-box input {
+        width: 120px;
+      }
+      .content {
+        padding: 0.75rem;
+      }
+      .kanban-header {
+        padding: 0.75rem 1rem;
+      }
+    }
   </style>
 </head>
 
@@ -1689,8 +1739,8 @@
       <button class="menu-toggle" onclick="toggleSidebar()" aria-label="Toggle Sidebar">☰</button>
       <div class="topbar-title" id="page-title">Dashboard</div>
       <div class="topbar-right">
-        <div class="api-status offline" id="api-badge">⏳ Connecting...</div>
-        <button class="btn-refresh" onclick="refreshData()">↻ Refresh</button>
+        <div class="api-status offline" id="api-badge">⏳ <span>Connecting...</span></div>
+        <button class="btn-refresh" onclick="refreshData()">↻ <span>Refresh</span></button>
         <div style="font-size:0.75rem;color:var(--muted)" id="last-updated"></div>
       </div>
     </div>
@@ -1757,15 +1807,28 @@
       return res.json();
     }
 
+    function updateApiStatusBadge(status) {
+      const badge = document.getElementById('api-badge');
+      if (!badge) return;
+      if (status === 'online') {
+        badge.innerHTML = '✅ <span>API Online</span>';
+        badge.className = 'api-status online';
+      } else if (status === 'offline') {
+        badge.innerHTML = '❌ <span>API Offline</span>';
+        badge.className = 'api-status offline';
+      } else {
+        badge.innerHTML = '⏳ <span>Connecting...</span>';
+        badge.className = 'api-status offline';
+      }
+    }
+
     async function checkApiHealth() {
       try {
         await apiFetch('/health');
-        document.getElementById('api-badge').textContent = '✅ API Online';
-        document.getElementById('api-badge').className = 'api-status online';
+        updateApiStatusBadge('online');
         return true;
       } catch {
-        document.getElementById('api-badge').textContent = '❌ API Offline';
-        document.getElementById('api-badge').className = 'api-status offline';
+        updateApiStatusBadge('offline');
         return false;
       }
     }
@@ -1958,9 +2021,9 @@
             <div style="font-family:var(--font-head); font-size:1.1rem; font-weight:800; color:var(--text)">
               Manage Bookings Lifecycle
             </div>
-            <div style="display:flex; gap:12px; align-items:center;">
+            <div style="display:flex; gap:12px; align-items:center; flex-wrap:wrap;">
               <div class="search-box">🔍 <input type="text" placeholder="Search name, ref, phone..." id="kanban-search-input" onkeydown="if(event.key === 'Enter') filterAndRenderKanban()"/></div>
-              <button class="btn-refresh" onclick="loadBookings()">↻ Refresh</button>
+              <button class="btn-refresh" onclick="loadBookings()">↻ <span>Refresh</span></button>
             </div>
           </div>
           
@@ -2517,6 +2580,7 @@
       document.getElementById('page-title').textContent = 'Technicians';
       const content = document.getElementById('main-content');
       content.innerHTML = '<div style="text-align:center;padding:3rem;color:var(--muted)">Loading technicians...</div>';
+      
       let techs = [];
       try {
         const res = await apiFetch('/technicians');
@@ -2524,31 +2588,207 @@
       } catch { techs = []; }
 
       content.innerHTML = `
-    <div class="panel">
-      <div class="panel-header">
-        <div class="panel-title">All Technicians</div>
+      <div class="brands-models-layout">
+        
+        <!-- LEFT PANEL: ADD/EDIT FORM -->
+        <div class="panel">
+          <div class="panel-header">
+            <div class="panel-title" id="tech-form-title">Add New Technician</div>
+          </div>
+          <div style="padding:1.25rem; display:flex; flex-direction:column; gap:12px;">
+             <input type="hidden" id="tech-edit-id" value="">
+             <div>
+                <label style="font-size:0.75rem; font-weight:600; color:var(--muted); display:block; margin-bottom:4px;">Full Name *</label>
+                <input type="text" id="tech-name" class="status-select" placeholder="e.g. Rajan M">
+             </div>
+             <div>
+                <label style="font-size:0.75rem; font-weight:600; color:var(--muted); display:block; margin-bottom:4px;">Phone Number *</label>
+                <input type="text" id="tech-phone" class="status-select" placeholder="e.g. +91 98765 11111">
+             </div>
+             <div>
+                <label style="font-size:0.75rem; font-weight:600; color:var(--muted); display:block; margin-bottom:4px;">Email Address</label>
+                <input type="email" id="tech-email" class="status-select" placeholder="e.g. rajan@tekzivo.com">
+             </div>
+             <div>
+                <label style="font-size:0.75rem; font-weight:600; color:var(--muted); display:block; margin-bottom:4px;">Specialization *</label>
+                <input type="text" id="tech-specialization" class="status-select" placeholder="e.g. Mobile & Laptop">
+             </div>
+             <div>
+                <label style="font-size:0.75rem; font-weight:600; color:var(--muted); display:block; margin-bottom:4px;">Area Pincode Coverage *</label>
+                <input type="text" id="tech-pincode" class="status-select" placeholder="e.g. 600001" maxlength="6">
+             </div>
+             <div>
+                <label style="font-size:0.75rem; font-weight:600; color:var(--muted); display:block; margin-bottom:4px;">Rating (1.00 - 5.00)</label>
+                <input type="number" id="tech-rating" class="status-select" placeholder="5.0" min="1" max="5" step="0.1" value="5.0">
+             </div>
+             <div>
+                <label style="font-size:0.75rem; font-weight:600; color:var(--muted); display:block; margin-bottom:4px;">Availability Status</label>
+                <select id="tech-avail" class="status-select">
+                   <option value="true">Available</option>
+                   <option value="false">Busy / Away</option>
+                </select>
+             </div>
+             <div style="display:flex; flex-direction:column; gap:8px; margin-top:6px;">
+                <button class="btn-primary" id="btn-tech-submit" onclick="submitTechnicianForm()" style="width:100%; height:38px;">Save Technician</button>
+                <button class="btn-sm btn-cancel-sm" id="btn-tech-cancel" onclick="cancelTechEdit()" style="display:none; width:100%; padding:8px;">Cancel Edit</button>
+             </div>
+          </div>
+        </div>
+
+        <!-- RIGHT PANEL: ALL TECHNICIANS LIST -->
+        <div class="panel">
+          <div class="panel-header">
+            <div class="panel-title">All Technicians</div>
+          </div>
+          <div class="table-wrap table-wrap-scroll">
+            <table>
+              <thead>
+                <tr>
+                  <th>Name</th>
+                  <th>Contact Details</th>
+                  <th>Specialization</th>
+                  <th>Pincode</th>
+                  <th>Rating</th>
+                  <th>Jobs</th>
+                  <th>Status</th>
+                  <th style="text-align:right">Actions</th>
+                </tr>
+              </thead>
+              <tbody id="tech-table-body">
+                ${techs.map(t => `
+                  <tr id="tech-row-${t.id}">
+                    <td>
+                      <div class="customer-cell">
+                        <div class="cust-avatar" style="background:${colorFor(t.name)}">${initials(t.name)}</div>
+                        <div class="cust-name">${t.name}</div>
+                      </div>
+                    </td>
+                    <td>
+                      <div style="font-weight:600; font-size:0.85rem;">${t.phone}</div>
+                      <div style="color:var(--muted); font-size:0.75rem;">${t.email || 'No email'}</div>
+                    </td>
+                    <td>${t.specialization}</td>
+                    <td><span style="font-family:monospace; font-weight:bold;">${t.area_pincode}</span></td>
+                    <td>⭐ ${Number(t.rating).toFixed(1)}</td>
+                    <td>${t.total_jobs}</td>
+                    <td>
+                      <span class="badge ${t.is_available ? 'badge-Completed' : 'badge-Cancelled'}" 
+                            style="cursor:pointer;" 
+                            onclick="toggleTechAvailabilityInline('${t.id}', ${t.is_available})"
+                            title="Click to toggle availability">
+                        ${t.is_available ? 'Available' : 'Busy'}
+                      </span>
+                    </td>
+                    <td style="text-align:right;">
+                      <div class="action-btns" style="justify-content:flex-end; gap:6px;">
+                        <button class="btn-sm btn-view" onclick="editTechInline('${t.id}')">Edit</button>
+                        <button class="btn-sm btn-cancel-sm" onclick="deleteTechInline('${t.id}', '${t.name}')">Delete</button>
+                      </div>
+                    </td>
+                  </tr>
+                `).join('')}
+                ${techs.length === 0 ? '<tr><td colspan="8" style="text-align:center;padding:2rem;color:var(--muted)">No technicians found</td></tr>' : ''}
+              </tbody>
+            </table>
+          </div>
+        </div>
+
       </div>
-      <div class="table-wrap table-wrap-scroll"><table>
-        <thead><tr>
-          <th>Name</th><th>Phone</th><th>Specialization</th>
-          <th>Pincode</th><th>Rating</th><th>Jobs</th><th>Status</th>
-        </tr></thead>
-        <tbody>
-          ${techs.length ? techs.map(t => `<tr>
-            <td><div class="customer-cell">
-              <div class="cust-avatar" style="background:${colorFor(t.name)}">${initials(t.name)}</div>
-              <div class="cust-name">${t.name}</div>
-            </div></td>
-            <td>${t.phone}</td>
-            <td>${t.specialization}</td>
-            <td>${t.area_pincode}</td>
-            <td>⭐ ${t.rating}</td>
-            <td>${t.total_jobs}</td>
-            <td><span class="badge ${t.is_available ? 'badge-Completed' : 'badge-Cancelled'}">${t.is_available ? 'Available' : 'Busy'}</span></td>
-          </tr>`).join('') : `<tr><td colspan="7" style="text-align:center;padding:2rem;color:var(--muted)">No technicians found — connect to API</td></tr>`}
-        </tbody>
-      </table></div>
-    </div>`;
+      `;
+    }
+
+    async function submitTechnicianForm() {
+      const id = document.getElementById('tech-edit-id').value;
+      const name = document.getElementById('tech-name').value.trim();
+      const phone = document.getElementById('tech-phone').value.trim();
+      const email = document.getElementById('tech-email').value.trim();
+      const specialization = document.getElementById('tech-specialization').value.trim();
+      const area_pincode = document.getElementById('tech-pincode').value.trim();
+      const rating = parseFloat(document.getElementById('tech-rating').value) || 5.0;
+      const is_available = document.getElementById('tech-avail').value === "true";
+
+      if (!name || !phone || !specialization || !area_pincode) {
+        showToast('❌ Please fill in all required fields (*)');
+        return;
+      }
+
+      const payload = { name, phone, email, specialization, area_pincode, rating, is_available };
+      const method = id ? 'PATCH' : 'POST';
+      const url = id ? `/technicians/${id}` : '/technicians';
+
+      try {
+        await apiFetch(url, {
+          method: method,
+          body: JSON.stringify(payload)
+        });
+        showToast(id ? '✅ Technician updated successfully!' : '✅ Technician added successfully!');
+        renderTechnicians();
+      } catch (e) {
+        showToast('❌ Error: ' + e.message);
+      }
+    }
+
+    async function editTechInline(id) {
+      try {
+        const res = await apiFetch(`/technicians`);
+        const tech = res.data.find(t => t.id === id);
+        if (!tech) return;
+
+        document.getElementById('tech-edit-id').value = tech.id;
+        document.getElementById('tech-name').value = tech.name;
+        document.getElementById('tech-phone').value = tech.phone;
+        document.getElementById('tech-email').value = tech.email || '';
+        document.getElementById('tech-specialization').value = tech.specialization;
+        document.getElementById('tech-pincode').value = tech.area_pincode;
+        document.getElementById('tech-rating').value = tech.rating;
+        document.getElementById('tech-avail').value = tech.is_available ? "true" : "false";
+
+        document.getElementById('tech-form-title').textContent = 'Edit Technician';
+        document.getElementById('btn-tech-cancel').style.display = 'block';
+        document.getElementById('btn-tech-submit').textContent = 'Update Technician';
+      } catch (e) {
+        showToast('Error loading technician details');
+      }
+    }
+
+    function cancelTechEdit() {
+      document.getElementById('tech-edit-id').value = '';
+      document.getElementById('tech-name').value = '';
+      document.getElementById('tech-phone').value = '';
+      document.getElementById('tech-email').value = '';
+      document.getElementById('tech-specialization').value = '';
+      document.getElementById('tech-pincode').value = '';
+      document.getElementById('tech-rating').value = '5.0';
+      document.getElementById('tech-avail').value = 'true';
+
+      document.getElementById('tech-form-title').textContent = 'Add New Technician';
+      document.getElementById('btn-tech-cancel').style.display = 'none';
+      document.getElementById('btn-tech-submit').textContent = 'Save Technician';
+    }
+
+    async function toggleTechAvailabilityInline(id, currentStatus) {
+      try {
+        await apiFetch(`/technicians/${id}`, {
+          method: 'PATCH',
+          body: JSON.stringify({ is_available: !currentStatus })
+        });
+        showToast('✅ Availability updated!');
+        renderTechnicians();
+      } catch (e) {
+        showToast('Error updating status');
+      }
+    }
+
+    async function deleteTechInline(id, name) {
+      showConfirm('Delete Technician', `Are you sure you want to delete technician "${name}"?`, async () => {
+        try {
+          await apiFetch(`/technicians/${id}`, { method: 'DELETE' });
+          showToast('✅ Technician deleted');
+          renderTechnicians();
+        } catch (e) {
+          showToast('Error deleting technician: ' + e.message);
+        }
+      });
     }
 
     // ─── CUSTOMERS SECTION ────────────────────
@@ -3408,8 +3648,7 @@
         const res = await apiFetch('/admin/bootstrap');
         if (res && res.success && res.data) {
           const data = res.data;
-          document.getElementById('api-badge').textContent = '✅ API Online';
-          document.getElementById('api-badge').className = 'api-status online';
+          updateApiStatusBadge('online');
           
           techniciansCache = data.technicians || [];
           statsCache = data.stats || {};

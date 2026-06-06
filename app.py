@@ -160,6 +160,7 @@ class Technician(db.Model):
     def to_dict(self):
         return {
             "id": self.id, "name": self.name, "phone": self.phone,
+            "email": self.email,
             "specialization": self.specialization,
             "area_pincode": self.area_pincode,
             "rating": float(self.rating),
@@ -655,6 +656,86 @@ def get_technicians():
     if available_only:
         query = query.filter_by(is_available=True)
     return ok([t.to_dict() for t in query.all()])
+
+@app.route("/api/technicians", methods=["POST"])
+def add_technician():
+    data = request.get_json() or {}
+    required = ["name", "phone", "specialization", "area_pincode"]
+    for field in required:
+        if not data.get(field):
+            return err(f"'{field}' is required")
+            
+    # Check phone uniqueness
+    existing = Technician.query.filter_by(phone=data["phone"]).first()
+    if existing:
+        if not existing.is_active:
+            # Reactivate soft-deleted technician
+            existing.is_active = True
+            existing.name = data["name"]
+            existing.email = data.get("email")
+            existing.specialization = data["specialization"]
+            existing.area_pincode = data["area_pincode"]
+            existing.rating = float(data.get("rating", 5.00))
+            db.session.commit()
+            return ok(existing.to_dict(), 201)
+        return err("Phone number already registered to another technician")
+
+    tech = Technician(
+        name=data["name"],
+        phone=data["phone"],
+        email=data.get("email"),
+        specialization=data["specialization"],
+        area_pincode=data["area_pincode"],
+        rating=float(data.get("rating", 5.00)),
+        is_available=bool(data.get("is_available", True)),
+        is_active=True
+    )
+    db.session.add(tech)
+    db.session.commit()
+    return ok(tech.to_dict(), 201)
+
+@app.route("/api/technicians/<tech_id>", methods=["PATCH"])
+def update_technician(tech_id):
+    tech = Technician.query.get(tech_id)
+    if not tech or not tech.is_active:
+        return err("Technician not found", 404)
+        
+    data = request.get_json() or {}
+    if "name" in data:
+        tech.name = data["name"]
+    if "phone" in data:
+        if data["phone"] != tech.phone:
+            existing = Technician.query.filter_by(phone=data["phone"]).first()
+            if existing and existing.is_active:
+                return err("Phone number already registered to another technician")
+        tech.phone = data["phone"]
+    if "email" in data:
+        tech.email = data["email"]
+    if "specialization" in data:
+        tech.specialization = data["specialization"]
+    if "area_pincode" in data:
+        tech.area_pincode = data["area_pincode"]
+    if "rating" in data:
+        try:
+            tech.rating = float(data["rating"])
+        except ValueError:
+            return err("Rating must be a numeric value")
+    if "is_available" in data:
+        tech.is_available = bool(data["is_available"])
+        
+    db.session.commit()
+    return ok(tech.to_dict())
+
+@app.route("/api/technicians/<tech_id>", methods=["DELETE"])
+def delete_technician(tech_id):
+    tech = Technician.query.get(tech_id)
+    if not tech or not tech.is_active:
+        return err("Technician not found", 404)
+        
+    # Soft delete by setting active flag to False
+    tech.is_active = False
+    db.session.commit()
+    return ok({"message": "Technician deleted successfully"})
 
 
 # ─────────────────────────────────────────
