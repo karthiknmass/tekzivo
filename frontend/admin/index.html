@@ -5,6 +5,7 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Tekzivo Admin Portal</title>
+  <link rel="icon" type="image/png" href="../logo.png" />
   <script>
     // Apply theme early to prevent FOUC (flash of unstyled content)
     (function () {
@@ -99,6 +100,17 @@
     .sidebar-logo span em {
       color: var(--gold);
       font-style: normal
+    }
+
+    .sidebar-logo-img {
+      height: 28px;
+      width: auto;
+      object-fit: contain;
+      transition: transform 0.2s ease;
+    }
+
+    .sidebar-logo:hover .sidebar-logo-img {
+      transform: scale(1.1) rotate(-4deg);
     }
 
     .sidebar-label {
@@ -1695,11 +1707,7 @@
   <!-- SIDEBAR -->
   <aside class="sidebar">
     <div class="sidebar-logo">
-      <svg width="28" height="28" viewBox="0 0 40 40" fill="none">
-        <circle cx="20" cy="20" r="18" fill="#1533b8" />
-        <path d="M12 14c0-1.1.9-2 2-2h12a2 2 0 012 2v2H12v-2z" fill="#f5a623" />
-        <path d="M10 18h20v10a2 2 0 01-2 2H12a2 2 0 01-2-2V18z" fill="white" fill-opacity="0.15" />
-      </svg>
+      <img src="../logo.png" alt="Tekzivo Logo" class="sidebar-logo-img">
       <span>Tek<em>zivo</em> <span style="font-size:0.6rem;font-weight:400;opacity:0.5">Admin</span></span>
     </div>
     <div class="sidebar-label">Main</div>

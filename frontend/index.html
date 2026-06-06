@@ -4,6 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Tekzivo - Mobile Spare Parts & Repair Services</title>
+    <link rel="icon" type="image/png" href="logo.png">
     <link rel="stylesheet" href="style.css">
 </head>
 <body>
@@ -29,7 +30,7 @@
     <!-- Header -->
     <header class="header-main">
         <div class="container">
-            <a href="#" class="logo" id="logo-brand">Tek<span>zivo</span></a>
+            <a href="#" class="logo" id="logo-brand"><img src="logo.png" alt="Tekzivo Logo" class="logo-img">Tek<span>zivo</span></a>
             
             <div class="search-bar">
                 <input type="text" placeholder="Search for spare parts, repair services, tools..." id="search-input" onkeydown="if(event.key === 'Enter') searchProducts()">
@@ -388,11 +389,13 @@
             const logoBrand = document.getElementById('logo-brand');
             if (logoBrand && activeSettings.business_name) {
                 const parts = activeSettings.business_name.split(' ');
+                let brandHTML = '';
                 if (parts.length > 1) {
-                    logoBrand.innerHTML = `${parts[0]}<span>${parts.slice(1).join(' ')}</span>`;
+                    brandHTML = `${parts[0]}<span>${parts.slice(1).join(' ')}</span>`;
                 } else {
-                    logoBrand.innerHTML = `${activeSettings.business_name}`;
+                    brandHTML = `${activeSettings.business_name}`;
                 }
+                logoBrand.innerHTML = `<img src="logo.png" alt="Tekzivo Logo" class="logo-img">${brandHTML}`;
             }
 
             // Update top bar contact elements
