@@ -1724,6 +1724,8 @@
           class="nav-icon">🏷️</span><span>Brands & Models</span></div>
       <div class="nav-item" onclick="loadSection('services',this)"><span
           class="nav-icon">💰</span><span>Services & Pricing</span></div>
+      <div class="nav-item" onclick="loadSection('accessories',this)"><span
+          class="nav-icon">🎧</span><span>Accessories & Gadgets</span></div>
     </nav>
     <div class="sidebar-label">System</div>
     <nav class="sidebar-nav">
@@ -3018,6 +3020,7 @@
                       <option value="Smartphone">Smartphone</option>
                       <option value="Laptop">Laptop</option>
                       <option value="LED TV">LED TV</option>
+                      <option value="Accessories & Gadgets">Accessories & Gadgets</option>
                    </select>
                 </div>
                 <div>
@@ -3144,6 +3147,162 @@
           await apiFetch(`/services/${id}`, { method: 'DELETE' });
           showToast('🗑️ Service deleted');
           renderServices();
+        } catch (e) {
+          showToast('❌ Error: ' + e.message);
+        }
+      });
+    }
+
+    async function renderAccessories() {
+      document.getElementById('page-title').textContent = 'Accessories & Gadgets';
+      const content = document.getElementById('main-content');
+      content.innerHTML = '<div style="text-align:center;padding:3rem;color:var(--muted)">Loading accessories...</div>';
+      
+      let services = [];
+      try {
+        const res = await apiFetch('/services?all=true');
+        services = res.data || [];
+      } catch (e) {
+        showToast('Error loading accessories: ' + e.message);
+      }
+
+      const accessories = services.filter(s => s.device_type === 'Accessories & Gadgets');
+
+      content.innerHTML = `
+      <div style="display:grid; grid-template-columns: 1fr; gap: 1.5rem;">
+        
+        <!-- ADD ACCESSORY PANEL -->
+        <div class="panel">
+          <div class="panel-header">
+            <div class="panel-title">Add New Accessory / Gadget</div>
+          </div>
+          <div style="padding:1.25rem;">
+             <div class="add-service-grid">
+                <div>
+                   <label style="font-size:0.75rem; font-weight:600; color:var(--muted); display:block; margin-bottom:4px;">Accessory Name</label>
+                   <input type="text" id="new-acc-name" class="status-select" placeholder="e.g. Mi 10000mAh Power Bank">
+                </div>
+                <div>
+                   <label style="font-size:0.75rem; font-weight:600; color:var(--muted); display:block; margin-bottom:4px;">Type / Description</label>
+                   <input type="text" id="new-acc-issue" class="status-select" placeholder="e.g. Power Bank">
+                </div>
+                <div>
+                   <label style="font-size:0.75rem; font-weight:600; color:var(--muted); display:block; margin-bottom:4px;">Price (₹)</label>
+                   <input type="number" id="new-acc-price" class="status-select" placeholder="e.g. 999" min="0">
+                </div>
+                <button class="btn-primary" onclick="addAccessory()" style="height:38px;">Add Accessory</button>
+             </div>
+          </div>
+        </div>
+
+        <!-- ACCESSORIES LIST PANEL -->
+        <div class="panel">
+          <div class="panel-header">
+            <div class="panel-title">Manage Accessories & Gadgets</div>
+          </div>
+          <div class="table-wrap table-wrap-scroll">
+            <table>
+              <thead>
+                <tr>
+                  <th>Product Name</th>
+                  <th>Type / Description</th>
+                  <th style="width: 150px;">Price (₹)</th>
+                  <th>Status</th>
+                  <th style="text-align:right">Actions</th>
+                </tr>
+              </thead>
+              <tbody>
+                ${accessories.map(s => `
+                  <tr>
+                    <td style="font-weight:600;">${s.name}</td>
+                    <td>${s.issue_type}</td>
+                    <td>
+                      <div style="display:flex; align-items:center; gap:4px;">
+                        <span style="color:var(--muted);">₹</span>
+                        <input type="number" id="svc-price-${s.id}" class="status-select" value="${s.base_price}" style="width:100px; padding:4px 8px; font-weight:bold; font-size:0.85rem;">
+                      </div>
+                    </td>
+                    <td>
+                      <select id="svc-active-${s.id}" class="status-select" style="width:90px; padding:4px; font-size:0.8rem;">
+                        <option value="true" ${s.is_active !== false ? 'selected' : ''}>Active</option>
+                        <option value="false" ${s.is_active === false ? 'selected' : ''}>Inactive</option>
+                      </select>
+                    </td>
+                    <td style="text-align:right;">
+                      <div class="action-btns" style="justify-content: flex-end;">
+                        <button class="btn-sm btn-view" onclick="saveAccessory('${s.id}')">Save</button>
+                        <button class="btn-sm btn-cancel-sm" onclick="deleteAccessory('${s.id}', '${s.name}')">Delete</button>
+                      </div>
+                    </td>
+                  </tr>
+                `).join('')}
+                ${accessories.length === 0 ? '<tr><td colspan="5" style="text-align:center;color:var(--muted);padding:2rem;">No accessories found</td></tr>' : ''}
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+      </div>
+      `;
+    }
+
+    async function addAccessory() {
+      const name = document.getElementById('new-acc-name').value.trim();
+      const issue_type = document.getElementById('new-acc-issue').value.trim();
+      const base_price = document.getElementById('new-acc-price').value.trim();
+
+      if (!name || !issue_type || !base_price) {
+        showToast('❌ Please fill all required fields');
+        return;
+      }
+
+      try {
+        await apiFetch('/services', {
+          method: 'POST',
+          body: JSON.stringify({
+            name,
+            device_type: 'Accessories & Gadgets',
+            issue_type,
+            base_price: parseFloat(base_price),
+            duration_mins: 0
+          })
+        });
+        showToast('✅ Accessory added successfully');
+        renderAccessories();
+      } catch (e) {
+        showToast('❌ Error: ' + e.message);
+      }
+    }
+
+    async function saveAccessory(id) {
+      const base_price = document.getElementById(`svc-price-${id}`).value;
+      const is_active = document.getElementById(`svc-active-${id}`).value === 'true';
+
+      if (!base_price || isNaN(base_price)) {
+        showToast('❌ Please enter a valid price');
+        return;
+      }
+
+      try {
+        await apiFetch(`/services/${id}`, {
+          method: 'PATCH',
+          body: JSON.stringify({
+            base_price: parseFloat(base_price),
+            is_active: is_active
+          })
+        });
+        showToast('✅ Accessory updated successfully');
+      } catch (e) {
+        showToast('❌ Error: ' + e.message);
+      }
+    }
+
+    async function deleteAccessory(id, name) {
+      showConfirm('Delete Accessory', `Are you sure you want to delete the product "${name}"?`, async () => {
+        try {
+          await apiFetch(`/services/${id}`, { method: 'DELETE' });
+          showToast('🗑️ Accessory deleted');
+          renderAccessories();
         } catch (e) {
           showToast('❌ Error: ' + e.message);
         }
@@ -3496,6 +3655,7 @@
       if (section === 'customers') renderCustomers();
       if (section === 'brands') renderBrands();
       if (section === 'services') renderServices();
+      if (section === 'accessories') renderAccessories();
       if (section === 'settings') renderSettings();
     }
 

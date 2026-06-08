@@ -984,10 +984,6 @@ def health():
 # ─────────────────────────────────────────
 
 def seed_default_brands_and_models():
-    # Only seed if there are no brands currently in the database
-    if Brand.query.first():
-        return
-
     BRAND_MODELS = {
         'Smartphone': [
             'Apple iPhone 13', 'Apple iPhone 14', 'Apple iPhone 15', 'Apple iPhone 12',
@@ -1006,6 +1002,14 @@ def seed_default_brands_and_models():
             'LG 55" OLED', 'LG 43" UHD', 'LG 65" NanoCell',
             'Sony Bravia 55" 4K', 'Sony Bravia 65" OLED',
             'OnePlus 50" Y Series', 'Xiaomi Mi TV 5X 43"'
+        ],
+        'Accessories & Gadgets': [
+            'Apple AirPods', 'Apple AirPods Pro',
+            'Samsung Buds', 'OnePlus Buds',
+            'Sony WH-1000XM4', 'Sony WH-1000XM5',
+            'Boat Bassheads', 'Boat Rockerz',
+            'Mi Power Bank', 'Anker PowerCore',
+            'Generic Universal Accessory', 'Generic Power Bank', 'Generic Headset'
         ]
     }
 
@@ -1064,6 +1068,15 @@ def seed_default_services_and_areas():
         ]
         db.session.bulk_save_objects(services)
         print("[SEED] Services catalog seeded.")
+
+    # Seed default Accessories & Gadgets if none exist
+    if not Service.query.filter_by(device_type="Accessories & Gadgets").first():
+        accessories = [
+            Service(name="Power Bank 10000mAh", device_type="Accessories & Gadgets", issue_type="Power Bank", base_price=999.00, duration_mins=0),
+            Service(name="Bluetooth Headset", device_type="Accessories & Gadgets", issue_type="Headset", base_price=1299.00, duration_mins=0)
+        ]
+        db.session.bulk_save_objects(accessories)
+        print("[SEED] Accessories & Gadgets seeded.")
 
     # 3. Seed Technicians
     if not Technician.query.first():

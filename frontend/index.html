@@ -54,6 +54,7 @@
                 <li><a href="#" onclick="showCategory('Smartphone', this)">Smartphones</a></li>
                 <li><a href="#" onclick="showCategory('Laptop', this)">Laptops</a></li>
                 <li><a href="#" onclick="showCategory('LED TV', this)">LED TVs</a></li>
+                <li><a href="#" onclick="showCategory('Accessories & Gadgets', this)">Accessories & Gadgets</a></li>
             </ul>
         </div>
     </nav>
@@ -64,6 +65,7 @@
         <div class="category-chip" onclick="showCategory('Smartphone', this)">📱 Smartphones</div>
         <div class="category-chip" onclick="showCategory('Laptop', this)">💻 Laptops</div>
         <div class="category-chip" onclick="showCategory('LED TV', this)">📺 LED TVs</div>
+        <div class="category-chip" onclick="showCategory('Accessories & Gadgets', this)">🎧 Accessories & Gadgets</div>
     </div>
 
     <!-- Layout Wrapper -->
@@ -77,9 +79,9 @@
                     <li><a href="#" onclick="showCategory('Smartphone', this)">Mobile Repair Services</a></li>
                     <li><a href="#" onclick="showCategory('Laptop', this)">Laptop Repair Services</a></li>
                     <li><a href="#" onclick="showCategory('LED TV', this)">TV Repair Services</a></li>
+                    <li><a href="#" onclick="showCategory('Accessories & Gadgets', this)">Accessories & Gadgets</a></li>
                     <li><a href="#">Spare Parts (Coming Soon)</a></li>
                     <li><a href="#">Repair Tools (Coming Soon)</a></li>
-                    <li><a href="#">Accessories (Coming Soon)</a></li>
                 </ul>
             </div>
             
@@ -165,7 +167,8 @@
                         <span id="chk-service-name">Service</span>
                         <span id="chk-device-name">Device</span>
                     </div>
-                    <div class="checkout-summary-total">
+                    <!-- Estimated Total hidden as requested -->
+                    <div class="checkout-summary-total" style="display: none;">
                         <span>Estimated Total:</span>
                         <span id="chk-price">₹0</span>
                     </div>
@@ -211,16 +214,7 @@
                     </div>
                 </div>
 
-                <div class="form-group">
-                    <label>Time Slot *</label>
-                    <select class="form-control" id="f-timeslot">
-                        <option value="">Select a time slot</option>
-                        <option value="10 AM - 12 PM">10 AM - 12 PM</option>
-                        <option value="12 PM - 2 PM">12 PM - 2 PM</option>
-                        <option value="2 PM - 4 PM">2 PM - 4 PM</option>
-                        <option value="4 PM - 6 PM">4 PM - 6 PM</option>
-                    </select>
-                </div>
+                <!-- Time Slot removed as requested -->
 
                 <div class="form-group">
                     <label>Full Address *</label>
@@ -308,6 +302,8 @@
 
         function getServiceIcon(deviceType, serviceName) {
             const name = serviceName.toLowerCase();
+            if (name.includes('headset') || name.includes('headphone') || name.includes('earphone')) return '🎧';
+            if (name.includes('power bank') || name.includes('powerbank') || name.includes('charger')) return '⚡';
             if (name.includes('screen')) return deviceType === 'Laptop' ? '💻' : '📱';
             if (name.includes('battery')) return '🔋';
             if (name.includes('charge') || name.includes('charging') || name.includes('port') || name.includes('power')) return '🔌';
@@ -485,8 +481,8 @@
             const container = document.getElementById('product-sections');
             container.innerHTML = '';
 
-            // Enforce strict category order: Smartphone, Laptop, LED TV
-            const orderedDeviceTypes = ['Smartphone', 'Laptop', 'LED TV'];
+            // Enforce strict category order: Smartphone, Laptop, LED TV, Accessories & Gadgets
+            const orderedDeviceTypes = ['Smartphone', 'Laptop', 'LED TV', 'Accessories & Gadgets'];
             for (const key of Object.keys(DEVICE_ISSUES)) {
                 if (!orderedDeviceTypes.includes(key)) {
                     orderedDeviceTypes.push(key);
@@ -546,6 +542,7 @@
                         else if (category === 'Smartphone' && (chipText.includes('smart') || chipText.includes('phone') || chipText.includes('mobile'))) chip.classList.add('active');
                         else if (category === 'Laptop' && chipText.includes('lap')) chip.classList.add('active');
                         else if (category === 'LED TV' && (chipText.includes('led') || chipText.includes('tv'))) chip.classList.add('active');
+                        else if (category === 'Accessories & Gadgets' && (chipText.includes('accessories') || chipText.includes('gadget') || chipText.includes('accessory'))) chip.classList.add('active');
                     });
                 }
                 
@@ -556,6 +553,7 @@
                     else if (category === 'Smartphone' && (txt.includes('smartphone') || txt.includes('mobile'))) el.classList.add('active');
                     else if (category === 'Laptop' && txt.includes('laptop')) el.classList.add('active');
                     else if (category === 'LED TV' && (txt.includes('led') || txt.includes('tv'))) el.classList.add('active');
+                    else if (category === 'Accessories & Gadgets' && (txt.includes('accessories') || txt.includes('gadget'))) el.classList.add('active');
                 });
             } else {
                 // Try matching based on category text
@@ -568,6 +566,8 @@
                     } else if (category === 'Laptop' && (txt.includes('laptop') || txt.includes('lap'))) {
                         el.classList.add('active');
                     } else if (category === 'LED TV' && (txt.includes('led') || txt.includes('tv'))) {
+                        el.classList.add('active');
+                    } else if (category === 'Accessories & Gadgets' && (txt.includes('accessories') || txt.includes('gadget') || txt.includes('accessory'))) {
                         el.classList.add('active');
                     }
                 });
@@ -786,7 +786,6 @@
                 document.getElementById('f-phone').value = '';
                 document.getElementById('f-pincode').value = '';
                 document.getElementById('f-date').value = '';
-                document.getElementById('f-timeslot').value = '';
                 document.getElementById('f-address').value = '';
                 document.getElementById('f-description').value = '';
                 document.getElementById('f-upload').value = '';
@@ -847,10 +846,9 @@
             const phone = document.getElementById('f-phone').value;
             const pincode = document.getElementById('f-pincode').value;
             const date = document.getElementById('f-date').value;
-            const time_slot = document.getElementById('f-timeslot').value;
             const address = document.getElementById('f-address').value;
 
-            if (!brandName || !modelName || !name || !phone || !pincode || !date || !time_slot || !address) {
+            if (!brandName || !modelName || !name || !phone || !pincode || !date || !address) {
                 showToast('❌ Please fill all required fields');
                 return;
             }
@@ -925,7 +923,7 @@
                 issue_description: `Brand: ${brandName}, Model: ${modelName}${customDescription ? '\n\nDescription:\n' + customDescription : ''}`,
                 image_path: image_path,
                 preferred_date: date,
-                time_slot: time_slot,
+                time_slot: 'Anytime',
                 estimated_price: checkoutData.price
             };
 
