@@ -38,9 +38,10 @@
             </div>
 
             <div class="header-actions">
-                <a href="#" class="cart-btn" onclick="showToast('Cart functionality available after booking!')">
+                <a href="#" class="cart-btn" onclick="toggleCartDrawer(); event.preventDefault();">
                     <span class="cart-icon">🛒</span>
                     <span>Cart</span>
+                    <span class="cart-badge" id="cart-badge" style="display: none;">0</span>
                 </a>
             </div>
         </div>
@@ -151,12 +152,93 @@
         </div>
     </footer>
 
+    <!-- Product Detail Modal -->
+    <div class="modal-overlay" id="product-detail-modal" onclick="if(event.target === this) closeProductDetailModal()">
+        <div class="modal-content" style="max-width: 680px;">
+            <div class="modal-header">
+                <h3 id="detail-modal-title">Product Details</h3>
+                <button class="close-modal" onclick="closeProductDetailModal()">×</button>
+            </div>
+            <div class="modal-body">
+                <div class="product-detail-layout">
+                    <div class="product-detail-image-sec">
+                        <div class="slideshow-container">
+                            <div class="slideshow-main-img-wrap">
+                                <img id="detail-product-img" src="" alt="Product Image">
+                            </div>
+                            <div class="slideshow-thumbnails" id="detail-product-thumbnails">
+                                <!-- Thumbnails injected dynamically -->
+                            </div>
+                        </div>
+                    </div>
+                    <div class="product-detail-info-sec">
+                        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px;">
+                            <span class="detail-badge" id="detail-product-badge">Accessories & Gadgets</span>
+                            <span id="detail-brand-name" style="font-size: 11px; font-weight: 700; text-transform: uppercase; color: var(--text-muted); letter-spacing: 0.8px;"></span>
+                        </div>
+                        <h2 class="detail-title" id="detail-product-title">Product Name</h2>
+                        
+                        <!-- Star rating for accessories -->
+                        <div id="detail-rating-container" class="acc-rating" style="display: none; margin-bottom: 12px;">
+                            <span class="stars">★★★★☆</span>
+                            <span class="rating-val" style="margin-left: 4px;">4.5 (Verified Reviews)</span>
+                        </div>
+
+                        <div class="detail-price-box">
+                            <span class="detail-price" id="detail-product-price">₹0</span>
+                            <span class="detail-mrp" id="detail-product-mrp">₹0</span>
+                            <span class="detail-discount" id="detail-product-discount">0% OFF</span>
+                        </div>
+
+                        <!-- Color options selection -->
+                        <div id="detail-color-section" style="display: none; margin-bottom: 14px;">
+                            <p class="detail-desc-label" style="margin-bottom: 4px;">Select Color:</p>
+                            <div class="detail-color-options" id="detail-product-colors">
+                                <!-- Color chips injected dynamically -->
+                            </div>
+                        </div>
+
+                        <!-- Qualities list -->
+                        <div id="detail-qualities-section" style="display: none; margin-bottom: 14px;">
+                            <p class="detail-desc-label" style="margin-bottom: 4px;">Product Highlights:</p>
+                            <ul class="detail-qualities-list" id="detail-product-qualities">
+                                <!-- Qualities list items injected dynamically -->
+                            </ul>
+                        </div>
+
+                        <!-- Quantity selection for accessories -->
+                        <div id="detail-qty-section" style="display: none; margin-bottom: 14px;">
+                            <p class="detail-desc-label" style="margin-bottom: 4px;">Quantity:</p>
+                            <div style="display: flex; align-items: center; gap: 8px;">
+                                <button type="button" class="btn-qty" onclick="adjustDetailQty(-1)" style="padding:4px 10px; border:1px solid var(--border-color); background:var(--white); border-radius:4px; font-weight:bold; cursor:pointer;">-</button>
+                                <span id="detail-qty-val" style="font-weight:600; font-size:15px; min-width:20px; text-align:center;">1</span>
+                                <button type="button" class="btn-qty" onclick="adjustDetailQty(1)" style="padding:4px 10px; border:1px solid var(--border-color); background:var(--white); border-radius:4px; font-weight:bold; cursor:pointer;">+</button>
+                            </div>
+                        </div>
+
+                        <p class="detail-desc-label">Product Description</p>
+                        <p class="detail-desc" id="detail-product-desc">No description available.</p>
+                        <div class="detail-features">
+                            <div class="detail-feat-item">📦 <span>Brand New & Sealed</span></div>
+                            <div class="detail-feat-item">⚡ <span>Super Fast Shipping</span></div>
+                            <div class="detail-feat-item">🛡️ <span>100% Genuine Product</span></div>
+                        </div>
+                        <div style="display: flex; gap: 10px; margin-top: 15px;" id="detail-actions-row">
+                            <button class="btn-submit-secondary" id="detail-cart-btn" onclick="addAccessoryToCartFromDetail()" style="flex: 1; display: none; margin-top: 0;">Add to Cart</button>
+                            <button class="btn-submit" id="detail-action-btn" onclick="buyFromDetail()" style="flex: 1; margin-top: 0;">Buy Now</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <!-- Checkout Modal -->
     <div class="modal-overlay" id="checkout-modal" onclick="if(event.target === this) closeModal()">
         <div class="modal-content">
             <div class="modal-handle"></div>
             <div class="modal-header">
-                <h3>Book Service / Checkout</h3>
+                <h3 id="chk-modal-title">Book Service / Checkout</h3>
                 <button class="close-modal" onclick="closeModal()">×</button>
             </div>
             
@@ -198,7 +280,8 @@
                     </div>
                     <div class="form-group">
                         <label>Phone Number *</label>
-                        <input type="tel" class="form-control" id="f-phone" placeholder="9876543210">
+                        <input type="tel" class="form-control" id="f-phone" placeholder="9876543210" maxlength="10" oninput="this.value = this.value.replace(/[^0-9]/g, ''); validatePhoneNumber(this.value)">
+                        <div id="phone-msg" style="font-size: 11px; margin-top: 4px;"></div>
                     </div>
                 </div>
 
@@ -249,8 +332,8 @@
             <!-- Success Content -->
             <div class="modal-body success-msg" id="modal-success-content" style="display: none;">
                 <div class="success-icon">✓</div>
-                <h2 style="margin-bottom: 12px; font-family: var(--font-title); font-weight: 700;">Booking Confirmed!</h2>
-                <p style="color: var(--text-muted); margin-bottom: 15px;">Our certified technician will arrive as scheduled.</p>
+                <h2 id="success-msg-title" style="margin-bottom: 12px; font-family: var(--font-title); font-weight: 700;">Booking Confirmed!</h2>
+                <p id="success-msg-desc" style="color: var(--text-muted); margin-bottom: 15px;">Our certified technician will arrive as scheduled.</p>
                 <div class="ref-code-container">
                     <div class="ref-code" id="success-ref">TKZ-00000</div>
                     <button class="btn-copy" onclick="copyRefCode()" title="Copy Reference Code">📋</button>
@@ -259,6 +342,35 @@
                 <button class="btn-submit" onclick="closeModal()" style="margin-top: 25px;">Continue Shopping</button>
             </div>
 
+        </div>
+    </div>
+
+    <!-- Shopping Cart Drawer -->
+    <div class="cart-drawer-overlay" id="cart-drawer-overlay" onclick="if(event.target === this) toggleCartDrawer()">
+        <div class="cart-drawer" id="cart-drawer">
+            <div class="cart-drawer-header">
+                <h3>Shopping Cart</h3>
+                <button class="close-cart-btn" onclick="toggleCartDrawer()">×</button>
+            </div>
+            <div class="cart-drawer-body" id="cart-items-container">
+                <!-- Cart items dynamically injected -->
+            </div>
+            <div class="cart-drawer-footer">
+                <div class="cart-summary-row">
+                    <span>Subtotal</span>
+                    <span id="cart-subtotal">₹0</span>
+                </div>
+                <div class="cart-summary-row">
+                    <span>Shipping</span>
+                    <span style="color: var(--success); font-weight: 600;">FREE</span>
+                </div>
+                <hr style="border: 0; border-top: 1px solid var(--border-color); margin: 12px 0;">
+                <div class="cart-summary-row" style="font-size: 17px; font-weight: 800; color: var(--text-main);">
+                    <span>Total</span>
+                    <span id="cart-total">₹0</span>
+                </div>
+                <button class="btn-checkout" id="btn-cart-checkout" onclick="proceedToCartCheckout()">PROCEED TO CHECKOUT</button>
+            </div>
         </div>
     </div>
 
@@ -339,10 +451,15 @@
                         if (!newIssues[s.device_type]) {
                             newIssues[s.device_type] = {};
                         }
+                        const mainImg = s.image_path ? s.image_path.split(',')[0] : '';
                         newIssues[s.device_type][s.name] = {
                             price: s.base_price,
-                            icon: getServiceIcon(s.device_type, s.name),
-                            id: s.id
+                            icon: mainImg ? `<img src="${mainImg}" alt="${s.name}" class="service-img">` : getServiceIcon(s.device_type, s.name),
+                            id: s.id,
+                            image_path: s.image_path || '',
+                            brand_name: s.brand_name || '',
+                            color_options: s.color_options || '',
+                            qualities: s.qualities || ''
                         };
                     });
                     for (const key in DEVICE_ISSUES) {
@@ -445,10 +562,15 @@
                             if (!newIssues[s.device_type]) {
                                 newIssues[s.device_type] = {};
                             }
+                            const mainImg = s.image_path ? s.image_path.split(',')[0] : '';
                             newIssues[s.device_type][s.name] = {
                                 price: s.base_price,
-                                icon: getServiceIcon(s.device_type, s.name),
-                                id: s.id
+                                icon: mainImg ? `<img src="${mainImg}" alt="${s.name}" class="service-img">` : getServiceIcon(s.device_type, s.name),
+                                id: s.id,
+                                image_path: s.image_path || '',
+                                brand_name: s.brand_name || '',
+                                color_options: s.color_options || '',
+                                qualities: s.qualities || ''
                             };
                         });
                         for (const key in DEVICE_ISSUES) {
@@ -477,6 +599,38 @@
             service_id: null
         };
 
+        function isAccessoryCategory(deviceType) {
+            return deviceType && deviceType.toLowerCase() === 'accessories & gadgets';
+        }
+
+        function renderColorDots(colorsString) {
+            if (!colorsString) return '';
+            const colors = colorsString.split(',').map(c => c.trim()).filter(Boolean);
+            return colors.map(color => {
+                let colorVal = color.toLowerCase();
+                if (colorVal.includes('matte black') || colorVal.includes('space gray') || colorVal.includes('space grey')) {
+                    colorVal = '#2c2c2c';
+                } else if (colorVal.includes('rose gold')) {
+                    colorVal = '#b76e79';
+                } else if (colorVal.includes('gold')) {
+                    colorVal = '#ffd700';
+                } else if (colorVal.includes('silver')) {
+                    colorVal = '#c0c0c0';
+                } else if (colorVal.includes('white')) {
+                    colorVal = '#ffffff';
+                } else if (colorVal.includes('black')) {
+                    colorVal = '#000000';
+                } else if (colorVal.includes('blue')) {
+                    colorVal = '#1e3a8a';
+                } else if (colorVal.includes('red')) {
+                    colorVal = '#dc2626';
+                } else if (colorVal.includes('green')) {
+                    colorVal = '#16a34a';
+                }
+                return `<span class="acc-color-dot" style="background-color: ${colorVal};" title="${color}"></span>`;
+            }).join('');
+        }
+
         function renderProducts(categoryFilter = 'All') {
             const container = document.getElementById('product-sections');
             container.innerHTML = '';
@@ -496,20 +650,54 @@
 
                 const section = document.createElement('div');
                 section.className = 'category-section';
-                section.innerHTML = `<h3 class="section-title">${deviceType} Services & Parts</h3>`;
+                section.innerHTML = `<h3 class="section-title">${isAccessoryCategory(deviceType) ? 'Accessories & Gadgets Catalog' : deviceType + ' Services & Parts'}</h3>`;
                 
                 const grid = document.createElement('div');
                 grid.className = 'product-grid';
 
                 for (const [issueName, data] of Object.entries(issues)) {
+                    const isAccessory = deviceType === 'Accessories & Gadgets';
+                    const imageSrcs = data.image_path ? data.image_path.split(',') : [];
+                    const mainImage = imageSrcs[0] || '';
+                    
                     const card = document.createElement('div');
-                    card.className = 'product-card';
-                    card.innerHTML = `
-                        <div class="product-img">${data.icon}</div>
-                        <div class="product-title">${deviceType} - ${issueName}</div>
-                        <div class="product-price">₹${data.price}</div>
-                        <button class="btn-add" onclick="openCheckout('${deviceType}', '${issueName}', ${data.price}, '${data.id || ''}')">Book Service</button>
-                    `;
+                    if (isAccessory) {
+                        card.className = 'accessory-card';
+                        const mrpPrice = Math.round((data.price * 1.35) / 10) * 10 - 1;
+                        card.innerHTML = `
+                            <div class="acc-img-wrap" onclick="openProductDetail('${deviceType}', '${issueName.replace(/'/g, "\\'")}', ${data.price}, '${data.id || ''}', '${data.image_path}', event)" title="View Product Details">
+                                ${mainImage ? `<img src="${mainImage}" alt="${issueName}">` : `<span style="font-size:32px;">🎧</span>`}
+                            </div>
+                            <div class="acc-brand">${data.brand_name || 'GENERIC'}</div>
+                            <div class="acc-title" onclick="openProductDetail('${deviceType}', '${issueName.replace(/'/g, "\\'")}', ${data.price}, '${data.id || ''}', '${data.image_path}', event)" style="cursor:pointer;" title="View Details">${issueName}</div>
+                            <div class="acc-rating">
+                                <span class="stars">★★★★☆</span>
+                                <span class="rating-val">4.5</span>
+                            </div>
+                            <div class="acc-colors">
+                                ${renderColorDots(data.color_options)}
+                            </div>
+                            <div class="acc-price-box">
+                                <span class="acc-price">₹${data.price}</span>
+                                <span class="acc-mrp">₹${mrpPrice}</span>
+                            </div>
+                            <div class="acc-btn-group">
+                                <button class="btn-add-secondary" onclick="addToCart('${deviceType}', '${issueName.replace(/'/g, "\\'")}', ${data.price}, '${data.id || ''}', '${data.image_path || ''}', '', 1)">Add to Cart</button>
+                                <button class="btn-add" onclick="buyNowDirect('${deviceType}', '${issueName.replace(/'/g, "\\'")}', ${data.price}, '${data.id || ''}', '${data.image_path || ''}')">Buy Now</button>
+                            </div>
+                        `;
+                    } else {
+                        card.className = 'product-card';
+                        const displayIcon = mainImage ? `<img src="${mainImage}" alt="${issueName}">` : data.icon;
+                        card.innerHTML = `
+                            <div class="product-img">
+                                ${displayIcon}
+                            </div>
+                            <div class="product-title">${deviceType} - ${issueName}</div>
+                            <div class="product-price">₹${data.price}</div>
+                            <button class="btn-add" onclick="openCheckout('${deviceType}', '${issueName.replace(/'/g, "\\'")}', ${data.price}, '${data.id || ''}')">Book Service</button>
+                        `;
+                    }
                     grid.appendChild(card);
                 }
 
@@ -589,14 +777,48 @@
                 for (const [issueName, data] of Object.entries(issues)) {
                     if (deviceType.toLowerCase().includes(query) || issueName.toLowerCase().includes(query)) {
                         found = true;
+                        const isAccessory = deviceType === 'Accessories & Gadgets';
+                        const imageSrcs = data.image_path ? data.image_path.split(',') : [];
+                        const mainImage = imageSrcs[0] || '';
+                        
                         const card = document.createElement('div');
-                        card.className = 'product-card';
-                        card.innerHTML = `
-                            <div class="product-img">${data.icon}</div>
-                            <div class="product-title">${deviceType} - ${issueName}</div>
-                            <div class="product-price">₹${data.price}</div>
-                            <button class="btn-add" onclick="openCheckout('${deviceType}', '${issueName}', ${data.price}, '${data.id || ''}')">Book Service</button>
-                        `;
+                        if (isAccessory) {
+                            card.className = 'accessory-card';
+                            const mrpPrice = Math.round((data.price * 1.35) / 10) * 10 - 1;
+                            card.innerHTML = `
+                                <div class="acc-img-wrap" onclick="openProductDetail('${deviceType}', '${issueName.replace(/'/g, "\\'")}', ${data.price}, '${data.id || ''}', '${data.image_path}', event)" title="View Product Details">
+                                    ${mainImage ? `<img src="${mainImage}" alt="${issueName}">` : `<span style="font-size:32px;">🎧</span>`}
+                                </div>
+                                <div class="acc-brand">${data.brand_name || 'GENERIC'}</div>
+                                <div class="acc-title" onclick="openProductDetail('${deviceType}', '${issueName.replace(/'/g, "\\'")}', ${data.price}, '${data.id || ''}', '${data.image_path}', event)" style="cursor:pointer;" title="View Details">${issueName}</div>
+                                <div class="acc-rating">
+                                    <span class="stars">★★★★☆</span>
+                                    <span class="rating-val">4.5</span>
+                                </div>
+                                <div class="acc-colors">
+                                    ${renderColorDots(data.color_options)}
+                                </div>
+                                <div class="acc-price-box">
+                                    <span class="acc-price">₹${data.price}</span>
+                                    <span class="acc-mrp">₹${mrpPrice}</span>
+                                </div>
+                                <div class="acc-btn-group">
+                                    <button class="btn-add-secondary" onclick="addToCart('${deviceType}', '${issueName.replace(/'/g, "\\'")}', ${data.price}, '${data.id || ''}', '${data.image_path || ''}', '', 1)">Add to Cart</button>
+                                    <button class="btn-add" onclick="buyNowDirect('${deviceType}', '${issueName.replace(/'/g, "\\'")}', ${data.price}, '${data.id || ''}', '${data.image_path || ''}')">Buy Now</button>
+                                </div>
+                            `;
+                        } else {
+                            card.className = 'product-card';
+                            const displayIcon = mainImage ? `<img src="${mainImage}" alt="${issueName}">` : data.icon;
+                            card.innerHTML = `
+                                <div class="product-img">
+                                    ${displayIcon}
+                                </div>
+                                <div class="product-title">${deviceType} - ${issueName}</div>
+                                <div class="product-price">₹${data.price}</div>
+                                <button class="btn-add" onclick="openCheckout('${deviceType}', '${issueName.replace(/'/g, "\\'")}', ${data.price}, '${data.id || ''}')">Book Service</button>
+                            `;
+                        }
                         grid.appendChild(card);
                     }
                 }
@@ -610,6 +832,7 @@
 
         // Initialize
         renderProducts();
+        loadCart();
 
         // Setup Date min
         const tomorrow = new Date();
@@ -617,43 +840,81 @@
         document.getElementById('f-date').min = tomorrow.toISOString().split('T')[0];
 
         // Modal Logic
-        function openCheckout(device, issue, price, serviceId = '') {
-            checkoutData = { device, issue, price, service_id: serviceId };
+        function openCheckout(device, issue, price, serviceId = '', selectedColor = '') {
+            const isAccessory = device === 'Accessories & Gadgets';
+            let finalColor = selectedColor;
+            if (isAccessory && !finalColor) {
+                const serviceObj = DEVICE_ISSUES[device]?.[issue] || {};
+                const colorOptions = serviceObj.color_options || '';
+                if (colorOptions) {
+                    const colors = colorOptions.split(',').map(c => c.trim()).filter(Boolean);
+                    if (colors.length > 0) {
+                        finalColor = colors[0];
+                    }
+                }
+            }
+            checkoutData = { device, issue, price, service_id: serviceId, selectedColor: finalColor };
+            
+            // Adjust modal headings & button labels
+            document.getElementById('chk-modal-title').innerText = isAccessory ? 'Buy Product / Checkout' : 'Book Service / Checkout';
+            const submitBtn = document.getElementById('submit-btn');
+            submitBtn.innerText = isAccessory ? 'CONFIRM ORDER' : 'CONFIRM BOOKING';
+            if (isAccessory) {
+                submitBtn.classList.add('checkout-accessory-confirm');
+            } else {
+                submitBtn.classList.remove('checkout-accessory-confirm');
+            }
+            
+            // Change date label
+            const dateLabel = document.querySelector('#f-date').previousElementSibling;
+            if (dateLabel) {
+                dateLabel.innerText = isAccessory ? 'Preferred Delivery Date *' : 'Preferred Date *';
+            }
             
             document.getElementById('chk-service-name').innerText = issue;
             document.getElementById('chk-device-name').innerText = `(${device})`;
             document.getElementById('chk-price').innerText = `₹${price}`;
             
-            // Populate brands dropdown based on device
+            // Populate/hide brand & model selectors
             const brandSelect = document.getElementById('f-brand');
             const modelSelect = document.getElementById('f-model');
+            const brandModelRow = brandSelect.closest('.form-row');
             
-            brandSelect.innerHTML = '<option value="">Select Brand...</option>';
-            modelSelect.innerHTML = '<option value="">Select Model...</option>';
-            modelSelect.disabled = true;
-            
-            // Hide custom inputs
-            document.getElementById('f-brand-custom').style.display = 'none';
-            document.getElementById('f-brand-custom').value = '';
-            document.getElementById('f-model-custom').style.display = 'none';
-            document.getElementById('f-model-custom').value = '';
+            if (isAccessory) {
+                if (brandModelRow) brandModelRow.style.display = 'none';
+                // Prefill to bypass required validation
+                brandSelect.innerHTML = '<option value="N/A" selected>N/A</option>';
+                modelSelect.innerHTML = '<option value="N/A" selected>N/A</option>';
+                modelSelect.disabled = false;
+            } else {
+                if (brandModelRow) brandModelRow.style.display = 'flex';
+                brandSelect.innerHTML = '<option value="">Select Brand...</option>';
+                modelSelect.innerHTML = '<option value="">Select Model...</option>';
+                modelSelect.disabled = true;
+                
+                // Hide custom inputs
+                document.getElementById('f-brand-custom').style.display = 'none';
+                document.getElementById('f-brand-custom').value = '';
+                document.getElementById('f-model-custom').style.display = 'none';
+                document.getElementById('f-model-custom').value = '';
 
-            const validBrands = new Set(allModels.filter(m => m.device_type === device).map(m => m.brand_id));
+                const validBrands = new Set(allModels.filter(m => m.device_type === device).map(m => m.brand_id));
 
-            allBrands.forEach(b => {
-                if (validBrands.has(b.id)) {
-                    const opt = document.createElement('option');
-                    opt.value = b.name;
-                    opt.innerText = b.name;
-                    brandSelect.appendChild(opt);
-                }
-            });
-            
-            // Add custom brand option
-            const customOpt = document.createElement('option');
-            customOpt.value = "__CUSTOM__";
-            customOpt.innerText = "Other (Type custom brand...)";
-            brandSelect.appendChild(customOpt);
+                allBrands.forEach(b => {
+                    if (validBrands.has(b.id)) {
+                        const opt = document.createElement('option');
+                        opt.value = b.name;
+                        opt.innerText = b.name;
+                        brandSelect.appendChild(opt);
+                    }
+                });
+                
+                // Add custom brand option
+                const customOpt = document.createElement('option');
+                customOpt.value = "__CUSTOM__";
+                customOpt.innerText = "Other (Type custom brand...)";
+                brandSelect.appendChild(customOpt);
+            }
             
             document.getElementById('modal-body-content').style.display = 'block';
             document.getElementById('modal-success-content').style.display = 'none';
@@ -782,18 +1043,446 @@
                 document.getElementById('f-model-custom').style.display = 'none';
                 document.getElementById('f-model-custom').value = '';
 
+                // Restore form-row display
+                const brandModelRow = brandSelect.closest('.form-row');
+                if (brandModelRow) brandModelRow.style.display = 'flex';
+
                 document.getElementById('f-name').value = '';
                 document.getElementById('f-phone').value = '';
                 document.getElementById('f-pincode').value = '';
                 document.getElementById('f-date').value = '';
                 document.getElementById('f-address').value = '';
-                document.getElementById('f-description').value = '';
+                const descInput = document.getElementById('f-description');
+                if (descInput) {
+                    descInput.value = '';
+                    descInput.disabled = false;
+                }
                 document.getElementById('f-upload').value = '';
                 selectedFile = null;
                 document.getElementById('upload-preview-container').style.display = 'none';
                 document.getElementById('upload-preview-img').src = '';
                 document.getElementById('pincode-msg').innerHTML = '';
             }, 200);
+        }
+
+        let currentDetailProduct = null;
+        let selectedColorOption = '';
+
+        function openProductDetail(device, issue, price, serviceId = '', imageSrc = '', e) {
+            if (e) e.stopPropagation();
+            
+            // Get full product object from state if available
+            const serviceObj = DEVICE_ISSUES[device]?.[issue] || {};
+            const brandName = serviceObj.brand_name || '';
+            const colorOptions = serviceObj.color_options || '';
+            const qualities = serviceObj.qualities || '';
+            const allImages = serviceObj.image_path || imageSrc || '';
+            
+            currentDetailProduct = { 
+                device, 
+                issue, 
+                price, 
+                service_id: serviceId, 
+                image_src: allImages,
+                brand_name: brandName,
+                color_options: colorOptions,
+                qualities: qualities
+            };
+            
+            selectedColorOption = ''; // Reset selected color option
+            currentDetailQty = 1;
+            const qtyValEl = document.getElementById('detail-qty-val');
+            if (qtyValEl) qtyValEl.innerText = 1;
+            const qtySecEl = document.getElementById('detail-qty-section');
+            
+            const isAccessory = device === 'Accessories & Gadgets';
+            if (qtySecEl) qtySecEl.style.display = isAccessory ? 'block' : 'none';
+            document.getElementById('detail-modal-title').innerText = isAccessory ? 'Product Details' : 'Service Details';
+            document.getElementById('detail-product-badge').innerText = device;
+            document.getElementById('detail-product-title').innerText = isAccessory ? issue : `${device} - ${issue}`;
+            
+            // Handle Brand Name
+            const brandEl = document.getElementById('detail-brand-name');
+            if (isAccessory && brandName) {
+                brandEl.innerText = brandName;
+                brandEl.style.display = 'inline-block';
+            } else {
+                brandEl.style.display = 'none';
+            }
+
+            // Handle Star Rating
+            const ratingContainer = document.getElementById('detail-rating-container');
+            if (isAccessory) {
+                ratingContainer.style.display = 'flex';
+            } else {
+                ratingContainer.style.display = 'none';
+            }
+
+            // Handle Image Slideshow
+            const imgEl = document.getElementById('detail-product-img');
+            const thumbsContainer = document.getElementById('detail-product-thumbnails');
+            thumbsContainer.innerHTML = '';
+            
+            const imagesList = allImages ? allImages.split(',').map(img => img.trim()).filter(Boolean) : [];
+            
+            if (imagesList.length > 0) {
+                imgEl.src = imagesList[0];
+                imgEl.style.display = 'block';
+                
+                if (imagesList.length > 1) {
+                    imagesList.forEach((imgUrl, index) => {
+                        const thumb = document.createElement('div');
+                        thumb.className = `slideshow-thumb ${index === 0 ? 'active-thumb' : ''}`;
+                        thumb.innerHTML = `<img src="${imgUrl}" alt="Thumbnail ${index + 1}">`;
+                        thumb.onclick = () => {
+                            // Swap main image
+                            imgEl.src = imgUrl;
+                            // Set active thumbnail
+                            thumbsContainer.querySelectorAll('.slideshow-thumb').forEach(t => t.classList.remove('active-thumb'));
+                            thumb.classList.add('active-thumb');
+                        };
+                        thumbsContainer.appendChild(thumb);
+                    });
+                    thumbsContainer.style.display = 'flex';
+                } else {
+                    thumbsContainer.style.display = 'none';
+                }
+            } else {
+                imgEl.src = 'logo.png';
+                thumbsContainer.style.display = 'none';
+            }
+            
+            // Price info
+            document.getElementById('detail-product-price').innerText = `₹${price}`;
+            const mrp = Math.round((price * 1.35) / 10) * 10 - 1; // 35% higher MRP
+            document.getElementById('detail-product-mrp').innerText = `₹${mrp}`;
+            
+            // Calculate actual percentage discount
+            const discountPct = mrp > 0 ? Math.round(((mrp - price) / mrp) * 100) : 0;
+            document.getElementById('detail-product-discount').innerText = `${discountPct}% OFF`;
+            
+            // Color options selection
+            const colorSection = document.getElementById('detail-color-section');
+            const colorContainer = document.getElementById('detail-product-colors');
+            colorContainer.innerHTML = '';
+            
+            if (isAccessory && colorOptions) {
+                const colors = colorOptions.split(',').map(c => c.trim()).filter(Boolean);
+                if (colors.length > 0) {
+                    colors.forEach((color, idx) => {
+                        const chip = document.createElement('div');
+                        chip.className = 'color-chip';
+                        
+                        // Parse visual color
+                        let colorVal = color.toLowerCase();
+                        if (colorVal.includes('matte black') || colorVal.includes('space gray') || colorVal.includes('space grey')) {
+                            colorVal = '#2c2c2c';
+                        } else if (colorVal.includes('rose gold')) {
+                            colorVal = '#b76e79';
+                        } else if (colorVal.includes('gold')) {
+                            colorVal = '#ffd700';
+                        } else if (colorVal.includes('silver')) {
+                            colorVal = '#c0c0c0';
+                        } else if (colorVal.includes('white')) {
+                            colorVal = '#ffffff';
+                        } else if (colorVal.includes('black')) {
+                            colorVal = '#000000';
+                        } else if (colorVal.includes('blue')) {
+                            colorVal = '#1e3a8a';
+                        } else if (colorVal.includes('red')) {
+                            colorVal = '#dc2626';
+                        } else if (colorVal.includes('green')) {
+                            colorVal = '#16a34a';
+                        }
+                        
+                        chip.innerHTML = `
+                            <span class="color-chip-preview" style="background-color: ${colorVal};"></span>
+                            <span>${color}</span>
+                        `;
+                        
+                        chip.onclick = () => {
+                            colorContainer.querySelectorAll('.color-chip').forEach(c => c.classList.remove('active'));
+                            chip.classList.add('active');
+                            selectedColorOption = color;
+                        };
+                        
+                        colorContainer.appendChild(chip);
+                    });
+                    colorSection.style.display = 'block';
+                } else {
+                    colorSection.style.display = 'none';
+                }
+            } else {
+                colorSection.style.display = 'none';
+            }
+            
+            // Qualities list
+            const qualitiesSection = document.getElementById('detail-qualities-section');
+            const qualitiesContainer = document.getElementById('detail-product-qualities');
+            qualitiesContainer.innerHTML = '';
+            
+            if (isAccessory && qualities) {
+                const qualityItems = qualities.split(',').map(q => q.trim()).filter(Boolean);
+                if (qualityItems.length > 0) {
+                    qualityItems.forEach(item => {
+                        const li = document.createElement('li');
+                        li.className = 'detail-quality-item';
+                        li.innerHTML = `
+                            <span class="detail-quality-icon">✓</span>
+                            <span>${item}</span>
+                        `;
+                        qualitiesContainer.appendChild(li);
+                    });
+                    qualitiesSection.style.display = 'block';
+                } else {
+                    qualitiesSection.style.display = 'none';
+                }
+            } else {
+                qualitiesSection.style.display = 'none';
+            }
+            
+            // Description & Button
+            const cartBtn = document.getElementById('detail-cart-btn');
+            const actionBtn = document.getElementById('detail-action-btn');
+            if (isAccessory) {
+                const descText = serviceObj.description || `Premium high-quality ${issue} designed for daily use. Features state-of-the-art durability, sleek modern design, and optimized performance. Fully compatible with major brands. Ready for delivery to your doorstep.`;
+                document.getElementById('detail-product-desc').innerText = descText;
+                actionBtn.innerText = 'Buy Now';
+                if (cartBtn) {
+                    cartBtn.style.display = 'block';
+                    cartBtn.classList.add('detail-accessory-cart');
+                }
+                actionBtn.classList.add('detail-accessory-buy');
+            } else {
+                const descText = serviceObj.description || `Professional doorstep repair service for ${device} (${issue}). Our certified service technician will visit your location to fix the issue using genuine spare parts. Includes 3 months warranty.`;
+                document.getElementById('detail-product-desc').innerText = descText;
+                actionBtn.innerText = 'Book Repair';
+                if (cartBtn) {
+                    cartBtn.style.display = 'none';
+                    cartBtn.classList.remove('detail-accessory-cart');
+                }
+                actionBtn.classList.remove('detail-accessory-buy');
+            }
+
+            document.getElementById('product-detail-modal').classList.add('active');
+        }
+
+        function closeProductDetailModal() {
+            document.getElementById('product-detail-modal').classList.remove('active');
+            currentDetailProduct = null;
+        }
+
+        let cart = [];
+        let isCartDrawerOpen = false;
+        let currentDetailQty = 1;
+
+        function adjustDetailQty(amount) {
+            currentDetailQty = Math.max(1, Math.min(5, currentDetailQty + amount));
+            const el = document.getElementById('detail-qty-val');
+            if (el) el.innerText = currentDetailQty;
+        }
+
+        function toggleCartDrawer() {
+            const overlay = document.getElementById('cart-drawer-overlay');
+            if (!overlay) return;
+            isCartDrawerOpen = !isCartDrawerOpen;
+            overlay.classList.toggle('active', isCartDrawerOpen);
+            if (isCartDrawerOpen) {
+                renderCart();
+            }
+        }
+
+        function addToCart(device, issue, price, serviceId = '', imageSrc = '', color = '', quantity = 1) {
+            let finalColor = color;
+            if (!finalColor) {
+                const serviceObj = DEVICE_ISSUES[device]?.[issue] || {};
+                const colorOptions = serviceObj.color_options || '';
+                if (colorOptions) {
+                    const colors = colorOptions.split(',').map(c => c.trim()).filter(Boolean);
+                    if (colors.length > 0) finalColor = colors[0];
+                }
+            }
+
+            const existingIndex = cart.findIndex(item => item.issue === issue && item.color === finalColor);
+            if (existingIndex > -1) {
+                cart[existingIndex].quantity += quantity;
+            } else {
+                cart.push({
+                    device,
+                    issue,
+                    price: Number(price),
+                    service_id: serviceId,
+                    image_src: imageSrc,
+                    color: finalColor,
+                    quantity: quantity
+                });
+            }
+
+            saveCart();
+            renderCart();
+            showToast(`🛒 Added ${quantity} ${issue} to cart!`);
+            
+            isCartDrawerOpen = false;
+            toggleCartDrawer();
+        }
+
+        function removeFromCart(index) {
+            cart.splice(index, 1);
+            saveCart();
+            renderCart();
+        }
+
+        function updateCartQty(index, delta) {
+            const item = cart[index];
+            if (!item) return;
+            item.quantity = Math.max(1, Math.min(5, item.quantity + delta));
+            saveCart();
+            renderCart();
+        }
+
+        function renderCart() {
+            const container = document.getElementById('cart-items-container');
+            const badge = document.getElementById('cart-badge');
+            if (!container) return;
+
+            container.innerHTML = '';
+            let subtotal = 0;
+            let totalItemsCount = 0;
+
+            if (cart.length === 0) {
+                container.innerHTML = `
+                    <div style="display:flex; flex-direction:column; align-items:center; justify-content:center; height:100%; text-align:center; color:var(--text-muted);">
+                        <span style="font-size:48px; margin-bottom:12px;">🛒</span>
+                        <p style="font-weight:600; margin-bottom:4px;">Your cart is empty</p>
+                        <p style="font-size:12.5px;">Add some accessories or gadgets to get started!</p>
+                    </div>
+                `;
+                document.getElementById('btn-cart-checkout').disabled = true;
+            } else {
+                document.getElementById('btn-cart-checkout').disabled = false;
+                cart.forEach((item, index) => {
+                    const imageSrcs = item.image_src ? item.image_src.split(',') : [];
+                    const mainImage = imageSrcs[0] || '';
+                    const itemTotal = item.price * item.quantity;
+                    subtotal += itemTotal;
+                    totalItemsCount += item.quantity;
+
+                    const cartItemEl = document.createElement('div');
+                    cartItemEl.className = 'cart-item';
+                    cartItemEl.innerHTML = `
+                        <div class="cart-item-img">
+                            ${mainImage ? `<img src="${mainImage}" alt="${item.issue}">` : `<span style="font-size:24px;">🎧</span>`}
+                        </div>
+                        <div class="cart-item-info">
+                            <div class="cart-item-title">${item.issue}</div>
+                            <div class="cart-item-meta">
+                                ${item.color ? `🎨 Color: ${item.color}` : ''}
+                            </div>
+                            <div style="display:flex; align-items:center; justify-content:space-between; margin-top:4px;">
+                                <span class="cart-item-price">₹${item.price}</span>
+                                <div class="cart-item-qty-controls">
+                                    <button class="btn-qty-sm" onclick="updateCartQty(${index}, -1)">-</button>
+                                    <span class="cart-item-qty">${item.quantity}</span>
+                                    <button class="btn-qty-sm" onclick="updateCartQty(${index}, 1)">+</button>
+                                </div>
+                            </div>
+                        </div>
+                        <button class="btn-remove-item" onclick="removeFromCart(${index})">×</button>
+                    `;
+                    container.appendChild(cartItemEl);
+                });
+            }
+
+            if (badge) {
+                if (totalItemsCount > 0) {
+                    badge.innerText = totalItemsCount;
+                    badge.style.display = 'flex';
+                } else {
+                    badge.style.display = 'none';
+                }
+            }
+
+            document.getElementById('cart-subtotal').innerText = `₹${subtotal}`;
+            document.getElementById('cart-total').innerText = `₹${subtotal}`;
+        }
+
+        function saveCart() {
+            localStorage.setItem('TEKZIVO_CART', JSON.stringify(cart));
+        }
+
+        function loadCart() {
+            try {
+                const saved = localStorage.getItem('TEKZIVO_CART');
+                if (saved) {
+                    cart = JSON.parse(saved);
+                    renderCart();
+                }
+            } catch (e) {
+                console.error("Failed to load cart", e);
+            }
+        }
+
+        let isCartCheckout = false;
+        
+        function proceedToCartCheckout() {
+            if (cart.length === 0) return;
+            toggleCartDrawer();
+
+            isCartCheckout = true;
+
+            let subtotal = 0;
+            let itemsDescription = "🛒 Cart Order:\n";
+            cart.forEach((item, index) => {
+                subtotal += item.price * item.quantity;
+                itemsDescription += `${index + 1}. ${item.issue} (Qty: ${item.quantity}${item.color ? `, Color: ${item.color}` : ''}) - ₹${item.price} each\n`;
+            });
+            itemsDescription += `\nTotal Price: ₹${subtotal}`;
+
+            openCheckout('Accessories & Gadgets', 'Multiple Items (Cart)', subtotal, 'CART');
+            
+            const descInput = document.getElementById('f-description');
+            if (descInput) {
+                descInput.value = itemsDescription;
+                descInput.disabled = true;
+            }
+        }
+
+        function buyNowDirect(device, issue, price, serviceId = '', imageSrc = '') {
+            addToCart(device, issue, price, serviceId, imageSrc, '', 1);
+            proceedToCartCheckout();
+        }
+
+        function addAccessoryToCartFromDetail() {
+            if (!currentDetailProduct) return;
+            const p = currentDetailProduct;
+            
+            if (p.color_options && !selectedColorOption) {
+                showToast('🎨 Please select a color option');
+                return;
+            }
+            
+            closeProductDetailModal();
+            addToCart(p.device, p.issue, p.price, p.service_id, p.image_src, selectedColorOption, currentDetailQty);
+        }
+
+        function buyFromDetail() {
+            if (!currentDetailProduct) return;
+            const p = currentDetailProduct;
+            
+            const isAccessory = p.device === 'Accessories & Gadgets';
+            if (isAccessory && p.color_options && !selectedColorOption) {
+                showToast('🎨 Please select a color option');
+                return;
+            }
+            
+            closeProductDetailModal();
+            
+            if (isAccessory) {
+                addToCart(p.device, p.issue, p.price, p.service_id, p.image_src, selectedColorOption, currentDetailQty);
+                proceedToCartCheckout();
+            } else {
+                openCheckout(p.device, p.issue, p.price, p.service_id, selectedColorOption);
+            }
         }
 
         async function validatePincode(pin) {
@@ -813,6 +1502,28 @@
             } catch (e) {
                 msg.innerHTML = `<span style="color: var(--danger); font-weight: 600;">✗ Service availability check failed</span>`;
             }
+        }
+
+        function validatePhoneNumber(phone) {
+            const msg = document.getElementById('phone-msg');
+            const cleanPhone = phone.replace(/[^0-9]/g, '');
+            
+            if (cleanPhone.length === 0) {
+                msg.innerHTML = '';
+                return;
+            }
+            
+            if (!/^[6-9]/.test(cleanPhone)) {
+                msg.innerHTML = `<span style="color: var(--danger); font-weight: 600; display: inline-flex; align-items: center; gap: 4px;">✗ Must start with 6, 7, 8, or 9</span>`;
+                return;
+            }
+            
+            if (cleanPhone.length < 10) {
+                msg.innerHTML = `<span style="color: var(--danger); font-weight: 600; display: inline-flex; align-items: center; gap: 4px;">✗ Must be 10 digits (${cleanPhone.length}/10)</span>`;
+                return;
+            }
+            
+            msg.innerHTML = `<span style="color: var(--success); font-weight: 600; display: inline-flex; align-items: center; gap: 4px;">✓ Valid phone number</span>`;
         }
 
         function showToast(msg) {
@@ -850,6 +1561,12 @@
 
             if (!brandName || !modelName || !name || !phone || !pincode || !date || !address) {
                 showToast('❌ Please fill all required fields');
+                return;
+            }
+
+            const cleanPhone = phone.replace(/[^0-9]/g, '');
+            if (cleanPhone.length !== 10 || !/^[6-9]/.test(cleanPhone)) {
+                showToast('❌ Please enter a valid 10-digit mobile number');
                 return;
             }
 
@@ -912,6 +1629,19 @@
             // Remove duplicate btn declaration
 
             const customDescription = document.getElementById('f-description').value.trim();
+            const isAccessory = checkoutData.device === 'Accessories & Gadgets';
+            let finalDesc = `Brand: ${brandName}, Model: ${modelName}`;
+            if (isAccessory && checkoutData.selectedColor) {
+                finalDesc += `, Color: ${checkoutData.selectedColor}`;
+            }
+            if (customDescription) {
+                if (isCartCheckout) {
+                    finalDesc = customDescription;
+                } else {
+                    finalDesc += `\n\nDescription:\n${customDescription}`;
+                }
+            }
+
             const payload = {
                 name: name,
                 phone: phone,
@@ -919,8 +1649,8 @@
                 address: address,
                 device_type: checkoutData.device,
                 issue_type: checkoutData.issue,
-                service_id: checkoutData.service_id || null,
-                issue_description: `Brand: ${brandName}, Model: ${modelName}${customDescription ? '\n\nDescription:\n' + customDescription : ''}`,
+                service_id: (checkoutData.service_id === 'CART' || !checkoutData.service_id) ? null : checkoutData.service_id,
+                issue_description: finalDesc,
                 image_path: image_path,
                 preferred_date: date,
                 time_slot: 'Anytime',
@@ -936,20 +1666,41 @@
                 const json = await res.json();
 
                 if (json.success) {
+                    const isAccessory = checkoutData.device === 'Accessories & Gadgets';
+                    document.getElementById('success-msg-title').innerText = isAccessory ? 'Order Confirmed!' : 'Booking Confirmed!';
+                    document.getElementById('success-msg-desc').innerText = isAccessory ? 'Your product will be delivered as scheduled.' : 'Our certified technician will arrive as scheduled.';
                     document.getElementById('modal-body-content').style.display = 'none';
                     document.getElementById('modal-success-content').style.display = 'block';
                     document.getElementById('success-ref').innerText = json.data.booking_ref;
+                    
+                    if (isCartCheckout) {
+                        cart = [];
+                        saveCart();
+                        renderCart();
+                        isCartCheckout = false;
+                    }
                 } else {
-                    showToast('❌ Booking failed: ' + json.error);
+                    showToast('❌ Failed: ' + json.error);
                 }
             } catch (e) {
                 // Fallback for demo if API is down
+                const isAccessory = checkoutData.device === 'Accessories & Gadgets';
+                document.getElementById('success-msg-title').innerText = isAccessory ? 'Order Confirmed!' : 'Booking Confirmed!';
+                document.getElementById('success-msg-desc').innerText = isAccessory ? 'Your product will be delivered as scheduled.' : 'Our certified technician will arrive as scheduled.';
                 document.getElementById('modal-body-content').style.display = 'none';
                 document.getElementById('modal-success-content').style.display = 'block';
                 document.getElementById('success-ref').innerText = 'TKZ-DEMO-OK';
+                
+                if (isCartCheckout) {
+                    cart = [];
+                    saveCart();
+                    renderCart();
+                    isCartCheckout = false;
+                }
             } finally {
                 btn.disabled = false;
-                btn.innerText = 'CONFIRM BOOKING';
+                const isAccessory = checkoutData.device === 'Accessories & Gadgets';
+                btn.innerText = isAccessory ? 'CONFIRM ORDER' : 'CONFIRM BOOKING';
             }
         }
 

@@ -1760,6 +1760,34 @@
     </div>
   </div>
 
+  <!-- MANAGE PRODUCT IMAGES MODAL -->
+  <div class="modal-overlay" id="acc-images-modal" onclick="if(event.target === this) closeAccImagesModal()">
+    <div class="modal-content" style="max-width: 500px;">
+      <div class="modal-header">
+        <div class="modal-title">Manage Product Images</div>
+        <button class="modal-close" onclick="closeAccImagesModal()">✕</button>
+      </div>
+      <div class="modal-body" style="padding: 1.5rem;">
+        <div style="margin-bottom: 1.25rem;">
+          <h4 id="acc-images-product-name" style="font-weight: 700; margin-bottom: 4px; color: var(--text);">Product Name</h4>
+          <p style="font-size: 0.8rem; color: var(--muted)">Upload and manage the slideshow images for this product.</p>
+        </div>
+        
+        <div id="acc-images-modal-grid" style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; margin-bottom: 1.5rem;">
+          <!-- dynamically populated -->
+        </div>
+
+        <div style="display: flex; gap: 10px; align-items: center;">
+          <input type="file" id="modal-acc-image-file-input" style="display:none;" accept="image/*" multiple onchange="uploadRowMoreImages(this)">
+          <button class="btn-primary" onclick="document.getElementById('modal-acc-image-file-input').click()" style="height: 38px;">➕ Upload New Photo</button>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn-secondary" onclick="closeAccImagesModal()">Close</button>
+      </div>
+    </div>
+  </div>
+
   <!-- MODAL -->
   <div class="modal-overlay" id="booking-modal">
     <div class="modal">
@@ -1798,6 +1826,7 @@
     let currentBookingId = null;
     let currentDrawerBookingId = null;
     let bookingsCache = [];
+    let accessoriesCache = [];
     let techniciansCache = [];
     let statsCache = {};
     let currentPage = 1;
@@ -3162,11 +3191,12 @@
       try {
         const res = await apiFetch('/services?all=true');
         services = res.data || [];
+        accessoriesCache = services.filter(s => s.device_type === 'Accessories & Gadgets');
       } catch (e) {
         showToast('Error loading accessories: ' + e.message);
       }
 
-      const accessories = services.filter(s => s.device_type === 'Accessories & Gadgets');
+      const accessories = accessoriesCache;
 
       content.innerHTML = `
       <div style="display:grid; grid-template-columns: 1fr; gap: 1.5rem;">
@@ -3177,20 +3207,43 @@
             <div class="panel-title">Add New Accessory / Gadget</div>
           </div>
           <div style="padding:1.25rem;">
-             <div class="add-service-grid">
+             <div class="add-service-grid" style="grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));">
                 <div>
-                   <label style="font-size:0.75rem; font-weight:600; color:var(--muted); display:block; margin-bottom:4px;">Accessory Name</label>
-                   <input type="text" id="new-acc-name" class="status-select" placeholder="e.g. Mi 10000mAh Power Bank">
+                   <label style="font-size:0.75rem; font-weight:600; color:var(--muted); display:block; margin-bottom:4px;">Accessory Name *</label>
+                   <input type="text" id="new-acc-name" class="status-select" placeholder="e.g. Mi 10000mAh Power Bank" style="width:100%;">
                 </div>
                 <div>
-                   <label style="font-size:0.75rem; font-weight:600; color:var(--muted); display:block; margin-bottom:4px;">Type / Description</label>
-                   <input type="text" id="new-acc-issue" class="status-select" placeholder="e.g. Power Bank">
+                   <label style="font-size:0.75rem; font-weight:600; color:var(--muted); display:block; margin-bottom:4px;">Brand Name *</label>
+                   <input type="text" id="new-acc-brand" class="status-select" placeholder="e.g. Xiaomi" style="width:100%;">
                 </div>
                 <div>
-                   <label style="font-size:0.75rem; font-weight:600; color:var(--muted); display:block; margin-bottom:4px;">Price (₹)</label>
-                   <input type="number" id="new-acc-price" class="status-select" placeholder="e.g. 999" min="0">
+                   <label style="font-size:0.75rem; font-weight:600; color:var(--muted); display:block; margin-bottom:4px;">Type / Category *</label>
+                   <input type="text" id="new-acc-issue" class="status-select" placeholder="e.g. Power Bank" style="width:100%;">
                 </div>
-                <button class="btn-primary" onclick="addAccessory()" style="height:38px;">Add Accessory</button>
+                <div>
+                   <label style="font-size:0.75rem; font-weight:600; color:var(--muted); display:block; margin-bottom:4px;">Price (₹) *</label>
+                   <input type="number" id="new-acc-price" class="status-select" placeholder="e.g. 999" min="0" style="width:100%;">
+                </div>
+                <div>
+                   <label style="font-size:0.75rem; font-weight:600; color:var(--muted); display:block; margin-bottom:4px;">Colors (Comma separated)</label>
+                   <input type="text" id="new-acc-colors" class="status-select" placeholder="e.g. Black, White, Blue" style="width:100%;">
+                </div>
+                <div>
+                   <label style="font-size:0.75rem; font-weight:600; color:var(--muted); display:block; margin-bottom:4px;">Qualities (Comma separated)</label>
+                   <input type="text" id="new-acc-qualities" class="status-select" placeholder="e.g. Fast Charging, Metal Body" style="width:100%;">
+                </div>
+                <div style="grid-column: 1 / -1;">
+                   <label style="font-size:0.75rem; font-weight:600; color:var(--muted); display:block; margin-bottom:6px;">Product Images (Upload one or more)</label>
+                   <div style="display:flex; gap:12px; align-items:center; flex-wrap:wrap;">
+                      <input type="file" id="new-acc-image-file" style="display:none;" accept="image/*" multiple onchange="uploadNewAccessoryImages(this)">
+                      <button type="button" class="btn-sm btn-view" onclick="document.getElementById('new-acc-image-file').click()" style="height:38px; padding:0 16px; white-space:nowrap; border-radius:6px; font-weight:600;">➕ Upload Photo</button>
+                      <input type="hidden" id="new-acc-image-paths" value="">
+                      <div id="new-acc-images-container" style="display:flex; gap:8px; flex-wrap:wrap;"></div>
+                   </div>
+                </div>
+                <div style="grid-column: 1 / -1; display:flex; justify-content:flex-end; margin-top:8px;">
+                   <button class="btn-primary" onclick="addAccessory()" style="height:40px; padding:0 24px;">Add Product to Store</button>
+                </div>
              </div>
           </div>
         </div>
@@ -3205,8 +3258,10 @@
               <thead>
                 <tr>
                   <th>Product Name</th>
-                  <th>Type / Description</th>
+                  <th>Brand</th>
+                  <th>Type / Category</th>
                   <th style="width: 150px;">Price (₹)</th>
+                  <th>Colors / Qualities</th>
                   <th>Status</th>
                   <th style="text-align:right">Actions</th>
                 </tr>
@@ -3214,16 +3269,42 @@
               <tbody>
                 ${accessories.map(s => `
                   <tr>
-                    <td style="font-weight:600;">${s.name}</td>
-                    <td>${s.issue_type}</td>
                     <td>
-                      <div style="display:flex; align-items:center; gap:4px;">
-                        <span style="color:var(--muted);">₹</span>
-                        <input type="number" id="svc-price-${s.id}" class="status-select" value="${s.base_price}" style="width:100px; padding:4px 8px; font-weight:bold; font-size:0.85rem;">
+                      <div style="display:flex; align-items:center; gap:12px;">
+                        <div style="position:relative; width:44px; height:44px; border-radius:8px; overflow:hidden; border:1px solid var(--border); background:#f8fafc; display:flex; align-items:center; justify-content:center; flex-shrink:0;" class="acc-img-container">
+                          ${s.image_path ? `<img src="${s.image_path.split(',')[0]}" style="width:100%; height:100%; object-fit:cover;">` : `<span style="font-size:22px;">🎧</span>`}
+                          <div class="acc-img-overlay" onclick="triggerRowImagesUpload('${s.id}')" style="position:absolute; inset:0; background:rgba(15,23,42,0.6); color:white; opacity:0; display:flex; align-items:center; justify-content:center; font-size:10px; cursor:pointer; font-weight:700; transition:opacity 0.2s; border-radius:8px;">
+                            Manage
+                          </div>
+                        </div>
+                        <div style="flex-grow:1;">
+                          <input type="text" id="svc-name-${s.id}" class="status-select" value="${s.name}" style="width:100%; padding:4px 8px; font-weight:bold; font-size:0.85rem; margin-bottom:4px;" placeholder="Product Name">
+                          <div style="font-size:11px; margin-top:2px; display:flex; gap:8px;">
+                            <a href="#" onclick="triggerRowImagesUpload('${s.id}', event)" style="color:var(--primary-light); text-decoration:none; font-weight:600;">🖼️ Photos (${s.image_path ? s.image_path.split(',').length : 0})</a>
+                          </div>
+                        </div>
                       </div>
                     </td>
                     <td>
-                      <select id="svc-active-${s.id}" class="status-select" style="width:90px; padding:4px; font-size:0.8rem;">
+                      <input type="text" id="svc-brand-${s.id}" class="status-select" value="${s.brand_name || ''}" placeholder="e.g. Xiaomi" style="width:100px; padding:4px 8px; font-size:0.85rem;">
+                    </td>
+                    <td>
+                      <input type="text" id="svc-issue-${s.id}" class="status-select" value="${s.issue_type}" placeholder="e.g. Power Bank" style="width:100px; padding:4px 8px; font-size:0.85rem;">
+                    </td>
+                    <td>
+                      <div style="display:flex; align-items:center; gap:4px;">
+                        <span style="color:var(--muted);">₹</span>
+                        <input type="number" id="svc-price-${s.id}" class="status-select" value="${s.base_price}" style="width:90px; padding:4px 8px; font-weight:bold; font-size:0.85rem;">
+                      </div>
+                    </td>
+                    <td>
+                      <div style="font-size:11px; color:var(--muted); width: 180px;">
+                        <div style="display:flex; align-items:center; gap:4px;">🎨 <input type="text" id="svc-colors-${s.id}" class="status-select" value="${s.color_options || ''}" placeholder="e.g. Black, White" style="flex-grow:1; padding:2px 6px; font-size:0.75rem;"></div>
+                        <div style="display:flex; align-items:center; gap:4px; margin-top:4px;">📋 <input type="text" id="svc-qualities-${s.id}" class="status-select" value="${s.qualities || ''}" placeholder="e.g. Highlight 1, Highlight 2" style="flex-grow:1; padding:2px 6px; font-size:0.75rem;"></div>
+                      </div>
+                    </td>
+                    <td>
+                      <select id="svc-active-${s.id}" class="status-select" style="width:85px; padding:4px; font-size:0.8rem;">
                         <option value="true" ${s.is_active !== false ? 'selected' : ''}>Active</option>
                         <option value="false" ${s.is_active === false ? 'selected' : ''}>Inactive</option>
                       </select>
@@ -3236,7 +3317,7 @@
                     </td>
                   </tr>
                 `).join('')}
-                ${accessories.length === 0 ? '<tr><td colspan="5" style="text-align:center;color:var(--muted);padding:2rem;">No accessories found</td></tr>' : ''}
+                ${accessories.length === 0 ? '<tr><td colspan="7" style="text-align:center;color:var(--muted);padding:2rem;">No accessories found</td></tr>' : ''}
               </tbody>
             </table>
           </div>
@@ -3246,12 +3327,83 @@
       `;
     }
 
+    let newAccessoryImagesList = [];
+
+    async function uploadNewAccessoryImages(input) {
+      const files = Array.from(input.files);
+      if (files.length === 0) return;
+
+      const button = input.nextElementSibling;
+      const originalText = button.textContent;
+      button.disabled = true;
+      button.textContent = 'Uploading...';
+
+      showToast(`⏳ Uploading ${files.length} photo(s)...`);
+
+      for (const file of files) {
+        if (file.size > 5 * 1024 * 1024) {
+          showToast(`❌ "${file.name}" is too large. Max size is 5MB.`);
+          continue;
+        }
+
+        const formData = new FormData();
+        formData.append('file', file);
+
+        try {
+          const res = await fetch(`${API_BASE}/upload`, {
+            method: 'POST',
+            body: formData
+          }).then(r => r.json());
+
+          if (res.success && res.data?.file_path) {
+            newAccessoryImagesList.push(res.data.file_path);
+          } else {
+            showToast(`❌ Failed to upload ${file.name}`);
+          }
+        } catch (e) {
+          console.error(e);
+          showToast(`❌ Error uploading ${file.name}`);
+        }
+      }
+
+      button.disabled = false;
+      button.textContent = originalText;
+      input.value = '';
+      renderNewAccessoryImagesPreviews();
+    }
+
+    function renderNewAccessoryImagesPreviews() {
+      const container = document.getElementById('new-acc-images-container');
+      const hiddenInput = document.getElementById('new-acc-image-paths');
+      
+      container.innerHTML = '';
+      hiddenInput.value = newAccessoryImagesList.join(',');
+
+      newAccessoryImagesList.forEach((path, idx) => {
+        container.innerHTML += `
+          <div style="position:relative; width:60px; height:60px; border-radius:6px; border:1px solid var(--border); overflow:hidden; background:#f8fafc;">
+            <img src="${path}" style="width:100%; height:100%; object-fit:cover;">
+            <button type="button" onclick="deleteNewAccessoryImage(${idx})" style="position:absolute; top:2px; right:2px; width:16px; height:16px; border-radius:50%; border:none; background:rgba(239,68,68,0.9); color:white; font-size:10px; cursor:pointer; display:flex; align-items:center; justify-content:center; font-weight:bold;">×</button>
+          </div>
+        `;
+      });
+    }
+
+    function deleteNewAccessoryImage(idx) {
+      newAccessoryImagesList.splice(idx, 1);
+      renderNewAccessoryImagesPreviews();
+    }
+
     async function addAccessory() {
       const name = document.getElementById('new-acc-name').value.trim();
+      const brand_name = document.getElementById('new-acc-brand').value.trim();
       const issue_type = document.getElementById('new-acc-issue').value.trim();
       const base_price = document.getElementById('new-acc-price').value.trim();
+      const color_options = document.getElementById('new-acc-colors').value.trim();
+      const qualities = document.getElementById('new-acc-qualities').value.trim();
+      const image_path = document.getElementById('new-acc-image-paths').value || null;
 
-      if (!name || !issue_type || !base_price) {
+      if (!name || !brand_name || !issue_type || !base_price) {
         showToast('❌ Please fill all required fields');
         return;
       }
@@ -3261,13 +3413,18 @@
           method: 'POST',
           body: JSON.stringify({
             name,
+            brand_name,
             device_type: 'Accessories & Gadgets',
             issue_type,
             base_price: parseFloat(base_price),
+            color_options: color_options || null,
+            qualities: qualities || null,
+            image_path: image_path,
             duration_mins: 0
           })
         });
         showToast('✅ Accessory added successfully');
+        newAccessoryImagesList = [];
         renderAccessories();
       } catch (e) {
         showToast('❌ Error: ' + e.message);
@@ -3275,11 +3432,16 @@
     }
 
     async function saveAccessory(id) {
+      const name = document.getElementById(`svc-name-${id}`).value.trim();
+      const brand_name = document.getElementById(`svc-brand-${id}`).value.trim();
+      const issue_type = document.getElementById(`svc-issue-${id}`).value.trim();
       const base_price = document.getElementById(`svc-price-${id}`).value;
+      const color_options = document.getElementById(`svc-colors-${id}`).value.trim();
+      const qualities = document.getElementById(`svc-qualities-${id}`).value.trim();
       const is_active = document.getElementById(`svc-active-${id}`).value === 'true';
 
-      if (!base_price || isNaN(base_price)) {
-        showToast('❌ Please enter a valid price');
+      if (!name || !brand_name || !issue_type || !base_price || isNaN(base_price)) {
+        showToast('❌ Please fill all required fields and check price');
         return;
       }
 
@@ -3287,11 +3449,17 @@
         await apiFetch(`/services/${id}`, {
           method: 'PATCH',
           body: JSON.stringify({
+            name: name,
+            brand_name: brand_name,
+            issue_type: issue_type,
             base_price: parseFloat(base_price),
+            color_options: color_options || null,
+            qualities: qualities || null,
             is_active: is_active
           })
         });
         showToast('✅ Accessory updated successfully');
+        renderAccessories();
       } catch (e) {
         showToast('❌ Error: ' + e.message);
       }
@@ -3309,6 +3477,114 @@
       });
     }
 
+    // Modal product images management
+    let activeModalProductId = null;
+    let activeModalProductImages = [];
+
+    function triggerRowImagesUpload(id, event) {
+      if (event) event.preventDefault();
+      activeModalProductId = id;
+      const item = accessoriesCache.find(s => s.id === id);
+      if (!item) return;
+
+      activeModalProductImages = item.image_path ? item.image_path.split(',').map(img => img.trim()).filter(Boolean) : [];
+      
+      document.getElementById('acc-images-product-name').textContent = item.name;
+      document.getElementById('acc-images-modal').classList.add('active');
+      renderAccImagesModalGrid();
+    }
+
+    function closeAccImagesModal() {
+      document.getElementById('acc-images-modal').classList.remove('active');
+      activeModalProductId = null;
+      activeModalProductImages = [];
+    }
+
+    function renderAccImagesModalGrid() {
+      const grid = document.getElementById('acc-images-modal-grid');
+      grid.innerHTML = '';
+
+      activeModalProductImages.forEach((path, idx) => {
+        grid.innerHTML += `
+          <div style="position:relative; aspect-ratio:1; border:1px solid var(--border); border-radius:8px; overflow:hidden; background:#f8fafc;">
+            <img src="${path}" style="width:100%; height:100%; object-fit:cover;">
+            <button onclick="deleteRowImage('${activeModalProductId}', '${path}')" style="position:absolute; top:4px; right:4px; border:none; background:rgba(239,68,68,0.9); color:white; border-radius:50%; width:20px; height:20px; font-size:12px; cursor:pointer; display:flex; align-items:center; justify-content:center; font-weight:bold;">×</button>
+          </div>
+        `;
+      });
+
+      if (activeModalProductImages.length === 0) {
+        grid.innerHTML = '<p style="grid-column:1/-1; text-align:center; padding:20px; color:var(--muted); font-size:0.8rem;">No images uploaded yet.</p>';
+      }
+    }
+
+    async function uploadRowMoreImages(input) {
+      const files = Array.from(input.files);
+      if (files.length === 0 || !activeModalProductId) return;
+
+      const button = input.nextElementSibling;
+      const originalText = button.textContent;
+      button.disabled = true;
+      button.textContent = 'Uploading...';
+
+      showToast(`⏳ Uploading ${files.length} photo(s)...`);
+
+      for (const file of files) {
+        const formData = new FormData();
+        formData.append('file', file);
+
+        try {
+          const res = await fetch(`${API_BASE}/upload`, {
+            method: 'POST',
+            body: formData
+          }).then(r => r.json());
+
+          if (res.success && res.data?.file_path) {
+            activeModalProductImages.push(res.data.file_path);
+          } else {
+            showToast(`❌ Failed to upload ${file.name}`);
+          }
+        } catch (e) {
+          showToast(`❌ Error uploading ${file.name}`);
+        }
+      }
+
+      try {
+        await apiFetch(`/services/${activeModalProductId}`, {
+          method: 'PATCH',
+          body: JSON.stringify({
+            image_path: activeModalProductImages.join(',')
+          })
+        });
+        showToast('✅ Images updated');
+        renderAccImagesModalGrid();
+        renderAccessories();
+      } catch (e) {
+        showToast('❌ Error saving images: ' + e.message);
+      }
+
+      button.disabled = false;
+      button.textContent = originalText;
+      input.value = '';
+    }
+
+    async function deleteRowImage(id, pathToDelete) {
+      activeModalProductImages = activeModalProductImages.filter(p => p !== pathToDelete);
+      try {
+        await apiFetch(`/services/${id}`, {
+          method: 'PATCH',
+          body: JSON.stringify({
+            image_path: activeModalProductImages.join(',')
+          })
+        });
+        showToast('🗑️ Image removed');
+        renderAccImagesModalGrid();
+        renderAccessories();
+      } catch (e) {
+        showToast('❌ Error removing image: ' + e.message);
+      }
+    }
+
     // ─── SETTINGS SECTION ─────────────────────
     let settingsCache = {};
     let serviceAreasCache = [];
@@ -3322,6 +3598,7 @@
           <div class="settings-tab-bar">
             <button class="settings-tab active" id="tab-btn-general" onclick="switchSettingsTab('general')">📋 General Profile</button>
             <button class="settings-tab" id="tab-btn-pincodes" onclick="switchSettingsTab('pincodes')">📍 Service Areas</button>
+            <button class="settings-tab" id="tab-btn-notifications" onclick="switchSettingsTab('notifications')">🔔 Alert Notifications</button>
             <button class="settings-tab" id="tab-btn-developer" onclick="switchSettingsTab('developer')">⚙️ Developer Tools</button>
           </div>
 
@@ -3396,6 +3673,76 @@
             </div>
           </div>
 
+          <!-- Notifications Tab -->
+          <div class="settings-section" id="sec-notifications">
+            <div style="margin-bottom:1.5rem;">
+              <h3 style="font-family:var(--font-head); font-size:1.1rem; color:var(--text); margin-bottom:4px;">Real-time Alert Notifications</h3>
+              <p style="font-size:0.82rem; color:var(--muted)">Configure active notifications for the admin when new bookings are submitted by customers.</p>
+            </div>
+            <form onsubmit="saveNotificationSettings(event)">
+              <div style="display:flex; flex-direction:column; gap:1.5rem;">
+                
+                <!-- Email Alerts Section -->
+                <div style="background:var(--bg); border:1px solid var(--border); border-radius:12px; padding:1.25rem;">
+                  <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:1rem; flex-wrap:wrap; gap:12px;">
+                    <h4 style="font-family:var(--font-head); font-size:0.95rem; color:var(--text); margin:0;">📧 Email Notifications (SMTP)</h4>
+                    <label class="switch-container" style="display:inline-flex; align-items:center; gap:8px; cursor:pointer; font-weight:600; font-size:0.85rem;">
+                      <input type="checkbox" id="set-notify-email-enable" style="width:auto;"> Enable Email Alerts
+                    </label>
+                  </div>
+                  <div class="form-grid">
+                    <div class="form-group">
+                      <label for="set-notify-email-recipient">Admin Recipient Email *</label>
+                      <input type="email" id="set-notify-email-recipient" placeholder="admin@tekzivo.com">
+                      <span style="font-size:0.75rem; color:var(--muted)">The address that receives alert emails.</span>
+                    </div>
+                    <div class="form-group">
+                      <label for="set-notify-email-sender">Sender Email Account (SMTP) *</label>
+                      <input type="email" id="set-notify-email-sender" placeholder="your-sender-email@gmail.com">
+                      <span style="font-size:0.75rem; color:var(--muted)">Your Gmail/Outlook address or SMTP account.</span>
+                    </div>
+                    <div class="form-group">
+                      <label for="set-notify-email-password">SMTP App Password / Auth Token *</label>
+                      <input type="password" id="set-notify-email-password" placeholder="••••••••••••••••">
+                      <span style="font-size:0.75rem; color:var(--muted)">For Gmail, generate an "App Password" in Google Account settings.</span>
+                    </div>
+                    <div class="form-group">
+                      <label for="set-notify-email-server">SMTP Host Server</label>
+                      <input type="text" id="set-notify-email-server" placeholder="smtp.gmail.com">
+                      <span style="font-size:0.75rem; color:var(--muted)">Default is smtp.gmail.com (port 587/TLS).</span>
+                    </div>
+                  </div>
+                </div>
+
+                <!-- Telegram Alerts Section -->
+                <div style="background:var(--bg); border:1px solid var(--border); border-radius:12px; padding:1.25rem;">
+                  <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:1rem; flex-wrap:wrap; gap:12px;">
+                    <h4 style="font-family:var(--font-head); font-size:0.95rem; color:var(--text); margin:0;">✈️ Telegram Bot Alerts</h4>
+                    <label class="switch-container" style="display:inline-flex; align-items:center; gap:8px; cursor:pointer; font-weight:600; font-size:0.85rem;">
+                      <input type="checkbox" id="set-notify-tg-enable" style="width:auto;"> Enable Telegram Alerts
+                    </label>
+                  </div>
+                  <div class="form-grid">
+                    <div class="form-group">
+                      <label for="set-notify-tg-token">Telegram Bot Token *</label>
+                      <input type="text" id="set-notify-tg-token" placeholder="1234567890:ABCdefGhIJKlmNoPQRsTUVwxyZ">
+                      <span style="font-size:0.75rem; color:var(--muted)">Obtained from @BotFather when creating your Telegram bot.</span>
+                    </div>
+                    <div class="form-group">
+                      <label for="set-notify-tg-chatid">Admin/Group Chat ID *</label>
+                      <input type="text" id="set-notify-tg-chatid" placeholder="987654321">
+                      <span style="font-size:0.75rem; color:var(--muted)">Your personal Chat ID or the group/channel ID. Get it via @userinfobot.</span>
+                    </div>
+                  </div>
+                </div>
+
+              </div>
+              <div class="form-actions" style="margin-top:1.5rem;">
+                <button type="submit" class="btn-primary">Save Notification Settings</button>
+              </div>
+            </form>
+          </div>
+
           <!-- Developer Tools Tab -->
           <div class="settings-section" id="sec-developer">
             <div style="margin-bottom:1.5rem;">
@@ -3445,6 +3792,55 @@
         await loadServiceAreas();
       } else if (tabName === 'developer') {
         loadDeveloperSettings();
+      } else if (tabName === 'notifications') {
+        await loadNotificationSettings();
+      }
+    }
+
+    async function loadNotificationSettings() {
+      try {
+        const res = await apiFetch('/settings');
+        settingsCache = res.data || {};
+      } catch (e) {
+        settingsCache = {};
+      }
+      
+      document.getElementById('set-notify-email-enable').checked = !!settingsCache.notify_email_enable;
+      document.getElementById('set-notify-email-recipient').value = settingsCache.notify_email_recipient || '';
+      document.getElementById('set-notify-email-sender').value = settingsCache.notify_email_sender || '';
+      document.getElementById('set-notify-email-password').value = settingsCache.notify_email_password || '';
+      document.getElementById('set-notify-email-server').value = settingsCache.notify_email_server || 'smtp.gmail.com';
+      
+      document.getElementById('set-notify-tg-enable').checked = !!settingsCache.notify_tg_enable;
+      document.getElementById('set-notify-tg-token').value = settingsCache.notify_tg_token || '';
+      document.getElementById('set-notify-tg-chatid').value = settingsCache.notify_tg_chatid || '';
+    }
+
+    async function saveNotificationSettings(e) {
+      if (e) e.preventDefault();
+      
+      const payload = {
+        notify_email_enable: document.getElementById('set-notify-email-enable').checked,
+        notify_email_recipient: document.getElementById('set-notify-email-recipient').value.trim(),
+        notify_email_sender: document.getElementById('set-notify-email-sender').value.trim(),
+        notify_email_password: document.getElementById('set-notify-email-password').value.trim(),
+        notify_email_server: document.getElementById('set-notify-email-server').value.trim(),
+        
+        notify_tg_enable: document.getElementById('set-notify-tg-enable').checked,
+        notify_tg_token: document.getElementById('set-notify-tg-token').value.trim(),
+        notify_tg_chatid: document.getElementById('set-notify-tg-chatid').value.trim()
+      };
+
+      try {
+        const res = await apiFetch('/settings', {
+          method: 'POST',
+          body: JSON.stringify(payload)
+        });
+        settingsCache = res.data;
+        showToast('✅ Notification settings saved successfully!');
+      } catch (err) {
+        settingsCache = { ...settingsCache, ...payload };
+        showToast('✅ Saved locally (API Offline)');
       }
     }
 
@@ -3799,6 +4195,110 @@
       return overlay;
     }
 
+    function playNotificationSound() {
+      try {
+        const AudioContext = window.AudioContext || window.webkitAudioContext;
+        if (!AudioContext) return;
+        const ctx = new AudioContext();
+        
+        const playTone = (freq, time, duration) => {
+          const osc = ctx.createOscillator();
+          const gain = ctx.createGain();
+          osc.type = 'sine';
+          osc.frequency.value = freq;
+          
+          gain.gain.setValueAtTime(0.15, time);
+          gain.gain.exponentialRampToValueAtTime(0.001, time + duration);
+          
+          osc.connect(gain);
+          gain.connect(ctx.destination);
+          
+          osc.start(time);
+          osc.stop(time + duration);
+        };
+        
+        const now = ctx.currentTime;
+        playTone(587.33, now, 0.12); // D5
+        playTone(880.00, now + 0.1, 0.3); // A5
+      } catch (err) {
+        console.warn("Could not play notification sound:", err);
+      }
+    }
+
+    function initRealtimeStream() {
+      const streamUrl = `${API_BASE}/bookings/stream`;
+      console.log("Initializing real-time stream at", streamUrl);
+      const eventSource = new EventSource(streamUrl);
+
+      eventSource.onmessage = function (event) {
+        try {
+          const payload = JSON.parse(event.data);
+          if (payload.event === 'booking_created' && payload.data) {
+            const newBooking = payload.data;
+            
+            // Prevent duplicate entries
+            if (bookingsCache.some(b => b.id === newBooking.id)) return;
+
+            // 1. Add to top of local cache
+            bookingsCache.unshift(newBooking);
+
+            // 2. Play synthesized pleasant notification chime
+            playNotificationSound();
+
+            // 3. Show a Toast Notification
+            const customerName = newBooking.customer?.name || 'Customer';
+            const deviceType = newBooking.service?.device_type || newBooking.device_type || 'Device';
+            const issueType = newBooking.service?.issue_type || newBooking.issue_type || 'Service';
+            showToast(`🔔 New booking from ${customerName} for ${deviceType} (${issueType})`);
+
+            // 4. Update dashboard stats cache
+            if (statsCache) {
+              if (!statsCache.totals) {
+                statsCache.totals = { total: 0, pending: 0, confirmed: 0, in_progress: 0, completed: 0, cancelled: 0 };
+              }
+              statsCache.totals.total = (statsCache.totals.total || 0) + 1;
+              statsCache.totals.pending = (statsCache.totals.pending || 0) + 1;
+              
+              // Increment daily bookings chart count for today
+              const todayStr = new Date().toISOString().split('T')[0];
+              if (statsCache.daily_bookings) {
+                const dayObj = statsCache.daily_bookings.find(d => d.date === todayStr);
+                if (dayObj) {
+                  dayObj.count = (dayObj.count || 0) + 1;
+                } else {
+                  statsCache.daily_bookings.push({ date: todayStr, count: 1 });
+                }
+              }
+              
+              const pb = document.getElementById('pending-badge');
+              if (pb) pb.textContent = statsCache.totals.pending;
+            }
+
+            // 5. Instantly refresh the current view without calling the API again
+            if (currentSection === 'dashboard') {
+              renderDashboardUI(statsCache);
+            } else if (currentSection === 'bookings') {
+              const tableTbody = document.getElementById('bookings-tbody');
+              if (tableTbody) {
+                filterAndRenderTable();
+              } else {
+                filterAndRenderKanban();
+              }
+            }
+          }
+        } catch (e) {
+          console.error("Error processing stream event:", e);
+        }
+      };
+
+      eventSource.onerror = function (err) {
+        console.warn("EventSource failed, attempting to reconnect...", err);
+        eventSource.close();
+        // Retry connection after 5 seconds
+        setTimeout(initRealtimeStream, 5000);
+      };
+    }
+
     // ─── INIT ─────────────────────────────────
     (async function () {
       // Redundant theme fallback to ensure class is applied after DOM is fully parsed
@@ -3835,6 +4335,8 @@
         await loadTechniciansCache();
         await renderDashboard();
       }
+
+      initRealtimeStream();
 
       // Auto-refresh every 60 seconds (non-blocking)
       setInterval(async () => {

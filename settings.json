@@ -1,0 +1,14 @@
+{
+    "business_name": "Tekzivo Electronics Care",
+    "support_phone": "+91 98765 43210",
+    "support_email": "support@tekzivo.com",
+    "business_hours": "09:00 AM - 07:00 PM",
+    "notify_email_enable": true,
+    "notify_email_recipient": "karthikeyan151199@gmail.com",
+    "notify_email_sender": "karthikeyan151199@gmail.com",
+    "notify_email_password": "vmda tabv phif kplv",
+    "notify_email_server": "smtp.gmail.com",
+    "notify_tg_enable": false,
+    "notify_tg_token": "",
+    "notify_tg_chatid": ""
+}

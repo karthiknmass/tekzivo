@@ -22,9 +22,11 @@ import os
 import uuid
 import random
 from datetime import datetime, date
+import queue
+import json
 from dotenv import load_dotenv
 
-from flask import Flask, request, jsonify
+from flask import Flask, request, jsonify, Response
 from flask_sqlalchemy import SQLAlchemy
 from flask_cors import CORS
 from sqlalchemy import text
@@ -112,6 +114,10 @@ class Service(db.Model):
     base_price    = db.Column(db.Numeric(10, 2), nullable=False, default=0)
     duration_mins = db.Column(db.Integer,     nullable=False, default=60)
     is_active     = db.Column(db.Boolean,     nullable=False, default=True)
+    image_path    = db.Column(db.String(255), nullable=True)
+    brand_name    = db.Column(db.String(100), nullable=True)
+    color_options = db.Column(db.String(255), nullable=True)
+    qualities     = db.Column(db.Text,        nullable=True)
     created_at    = db.Column(db.DateTime,    default=datetime.utcnow)
 
     def to_dict(self):
@@ -119,7 +125,11 @@ class Service(db.Model):
             "id": self.id, "name": self.name,
             "device_type": self.device_type, "issue_type": self.issue_type,
             "base_price": float(self.base_price),
-            "duration_mins": self.duration_mins
+            "duration_mins": self.duration_mins,
+            "image_path": self.image_path,
+            "brand_name": self.brand_name,
+            "color_options": self.color_options,
+            "qualities": self.qualities
         }
 
 
@@ -279,6 +289,127 @@ def err(msg, code=400):
     return jsonify({"success": False, "error": msg}), code
 
 
+# Real-time Server-Sent Events (SSE) for Bookings
+sse_announcers = []
+
+def send_booking_alerts(booking_dict):
+    settings = load_settings()
+    
+    # 1. Email Alerts
+    if settings.get("notify_email_enable") and settings.get("notify_email_recipient"):
+        try:
+            import smtplib
+            from email.mime.text import MIMEText
+            from email.mime.multipart import MIMEMultipart
+
+            sender = settings.get("notify_email_sender")
+            password = settings.get("notify_email_password")
+            recipient = settings.get("notify_email_recipient")
+            host = settings.get("notify_email_server", "smtp.gmail.com")
+            port = 587
+            
+            if sender and password and recipient:
+                subject = f"Alert: New Booking {booking_dict['booking_ref']}"
+                body = f"""Hello Admin,
+
+A new service booking has been created on Tekzivo!
+
+Booking Information:
+----------------------------------------
+Reference: {booking_dict['booking_ref']}
+Customer Name: {booking_dict['customer']['name'] if booking_dict.get('customer') else 'N/A'}
+Customer Phone: {booking_dict['customer']['phone'] if booking_dict.get('customer') else 'N/A'}
+Device: {booking_dict['service']['device_type'] if booking_dict.get('service') else booking_dict.get('device_type', 'N/A')}
+Issue Type: {booking_dict['service']['issue_type'] if booking_dict.get('service') else booking_dict.get('issue_type', 'N/A')}
+Preferred Date: {booking_dict['preferred_date']}
+Time Slot: {booking_dict['time_slot']}
+Pincode: {booking_dict['pincode']}
+Address: {booking_dict.get('address', '')}
+Estimated Price: Rs.{booking_dict['estimated_price']}
+Description: {booking_dict.get('issue_description', '')}
+
+Please open the admin panel to assign a technician and manage this booking.
+
+Best Regards,
+Tekzivo System
+"""
+                msg = MIMEMultipart()
+                msg['From'] = sender
+                msg['To'] = recipient
+                msg['Subject'] = subject
+                msg.attach(MIMEText(body, 'plain'))
+                
+                server = smtplib.SMTP(host, port)
+                server.starttls()
+                server.login(sender, password)
+                server.sendmail(sender, recipient, msg.as_string())
+                server.quit()
+                print("[ALERT] Booking notification email sent successfully.")
+        except Exception as e:
+            print(f"[ALERT_ERROR] Failed to send email alert: {e}")
+
+    # 2. Telegram Alerts
+    if settings.get("notify_tg_enable") and settings.get("notify_tg_token") and settings.get("notify_tg_chatid"):
+        try:
+            import requests
+            token = settings.get("notify_tg_token")
+            chat_id = settings.get("notify_tg_chatid")
+            
+            c_name = booking_dict['customer']['name'] if booking_dict.get('customer') else 'N/A'
+            c_phone = booking_dict['customer']['phone'] if booking_dict.get('customer') else 'N/A'
+            dev_type = booking_dict['service']['device_type'] if booking_dict.get('service') else booking_dict.get('device_type', 'N/A')
+            iss_type = booking_dict['service']['issue_type'] if booking_dict.get('service') else booking_dict.get('issue_type', 'N/A')
+            
+            text = (
+                f"🚨 *New Booking Alert* 🚨\n\n"
+                f"• *Ref:* `{booking_dict['booking_ref']}`\n"
+                f"• *Customer:* {c_name} ({c_phone})\n"
+                f"• *Device:* {dev_type}\n"
+                f"• *Issue:* {iss_type}\n"
+                f"• *Date:* {booking_dict['preferred_date']} ({booking_dict['time_slot']})\n"
+                f"• *Pincode:* {booking_dict['pincode']}\n"
+                f"• *Price:* ₹{booking_dict['estimated_price']}"
+            )
+            
+            url = f"https://api.telegram.org/bot{token}/sendMessage"
+            payload = {"chat_id": chat_id, "text": text, "parse_mode": "Markdown"}
+            requests.post(url, json=payload, timeout=8)
+            print("[ALERT] Telegram notification sent successfully.")
+        except Exception as e:
+            print(f"[ALERT_ERROR] Failed to send Telegram alert: {e}")
+
+def notify_booking_created(booking_dict):
+    msg = json.dumps({"event": "booking_created", "data": booking_dict})
+    for q in list(sse_announcers):
+        try:
+            q.put_nowait(msg)
+        except queue.Full:
+            pass
+
+    import threading
+    t = threading.Thread(target=send_booking_alerts, args=(booking_dict,))
+    t.start()
+
+@app.route("/api/bookings/stream")
+def stream_bookings():
+    def event_stream():
+        q = queue.Queue(maxsize=100)
+        sse_announcers.append(q)
+        try:
+            yield f"data: {json.dumps({'event': 'connected'})}\n\n"
+            while True:
+                msg = q.get()
+                yield f"data: {msg}\n\n"
+        except GeneratorExit:
+            if q in sse_announcers:
+                sse_announcers.remove(q)
+    
+    response = Response(event_stream(), mimetype="text/event-stream")
+    response.headers["Cache-Control"] = "no-cache"
+    response.headers["X-Accel-Buffering"] = "no"
+    return response
+
+
 # ─────────────────────────────────────────
 # ROUTES — BOOKINGS
 # ─────────────────────────────────────────
@@ -368,7 +499,9 @@ def create_booking():
     db.session.add(payment)
 
     db.session.commit()
-    return ok({"booking_ref": booking.booking_ref, "booking": booking.to_dict()}, 201)
+    booking_dict = booking.to_dict()
+    notify_booking_created(booking_dict)
+    return ok({"booking_ref": booking.booking_ref, "booking": booking_dict}, 201)
 
 
 # GET /api/bookings  — list all bookings (admin portal)
@@ -513,7 +646,11 @@ def add_service():
         issue_type=data["issue_type"],
         base_price=price,
         duration_mins=int(data.get("duration_mins", 60)),
-        is_active=True
+        is_active=True,
+        image_path=data.get("image_path"),
+        brand_name=data.get("brand_name"),
+        color_options=data.get("color_options"),
+        qualities=data.get("qualities")
     )
     db.session.add(service)
     db.session.commit()
@@ -540,6 +677,14 @@ def update_service(service_id):
         service.duration_mins = int(data["duration_mins"])
     if "is_active" in data:
         service.is_active = bool(data["is_active"])
+    if "image_path" in data:
+        service.image_path = data["image_path"]
+    if "brand_name" in data:
+        service.brand_name = data["brand_name"]
+    if "color_options" in data:
+        service.color_options = data["color_options"]
+    if "qualities" in data:
+        service.qualities = data["qualities"]
 
     db.session.commit()
     return ok(service.to_dict())
@@ -1105,6 +1250,30 @@ def create_indexes():
     # Attempt to add image_path column if it doesn't exist (SQLite migration fallback)
     try:
         db.session.execute(text("ALTER TABLE bookings ADD COLUMN image_path TEXT;"))
+        db.session.commit()
+    except Exception:
+        db.session.rollback()
+
+    try:
+        db.session.execute(text("ALTER TABLE services ADD COLUMN image_path TEXT;"))
+        db.session.commit()
+    except Exception:
+        db.session.rollback()
+
+    try:
+        db.session.execute(text("ALTER TABLE services ADD COLUMN brand_name TEXT;"))
+        db.session.commit()
+    except Exception:
+        db.session.rollback()
+
+    try:
+        db.session.execute(text("ALTER TABLE services ADD COLUMN color_options TEXT;"))
+        db.session.commit()
+    except Exception:
+        db.session.rollback()
+
+    try:
+        db.session.execute(text("ALTER TABLE services ADD COLUMN qualities TEXT;"))
         db.session.commit()
     except Exception:
         db.session.rollback()
