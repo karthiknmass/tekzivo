@@ -6,8 +6,90 @@
     <title>Tekzivo - Mobile Spare Parts & Repair Services</title>
     <link rel="icon" type="image/png" href="logo.png">
     <link rel="stylesheet" href="style.css">
+    <style>
+        /* Preloader Styles */
+        .preloader-container {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: hsl(222, 47%, 8%);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 999999;
+            opacity: 1;
+            transition: opacity 0.5s ease, visibility 0.5s ease;
+        }
+        .preloader-content {
+            text-align: center;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+        .preloader-logo {
+            font-family: 'Outfit', sans-serif;
+            font-size: 2.6rem;
+            font-weight: 800;
+            color: #ffffff;
+            margin-bottom: 24px;
+            letter-spacing: -0.03em;
+            animation: pulseLogo 2s infinite ease-in-out;
+        }
+        .preloader-logo span {
+            color: hsl(38, 92%, 50%);
+        }
+        .preloader-spinner-wrap {
+            position: relative;
+            width: 56px;
+            height: 56px;
+            margin-bottom: 20px;
+        }
+        .preloader-spinner {
+            box-sizing: border-box;
+            width: 100%;
+            height: 100%;
+            border: 3px solid rgba(255, 255, 255, 0.05);
+            border-radius: 50%;
+            border-top-color: hsl(221, 83%, 53%);
+            border-right-color: hsl(38, 92%, 50%);
+            animation: spinnerRotate 0.9s linear infinite;
+        }
+        .preloader-text {
+            font-family: 'Plus Jakarta Sans', sans-serif;
+            font-size: 0.9rem;
+            color: hsl(215, 20%, 70%);
+            font-weight: 500;
+            letter-spacing: 0.02em;
+        }
+        @keyframes spinnerRotate {
+            to { transform: rotate(360deg); }
+        }
+        @keyframes pulseLogo {
+            0%, 100% { transform: scale(0.98); opacity: 0.9; }
+            50% { transform: scale(1.02); opacity: 1; }
+        }
+        .preloader-hidden {
+            opacity: 0;
+            visibility: hidden;
+            pointer-events: none;
+        }
+    </style>
 </head>
 <body>
+    <!-- Preloader -->
+    <div id="app-preloader" class="preloader-container">
+        <div class="preloader-content">
+            <div class="preloader-logo">
+                Tek<span>zivo</span>
+            </div>
+            <div class="preloader-spinner-wrap">
+                <div class="preloader-spinner"></div>
+            </div>
+            <div class="preloader-text">Loading premium repair care...</div>
+        </div>
+    </div>
 
     <!-- Top Bar -->
     <div class="top-bar">
@@ -378,11 +460,39 @@
         const getApiBase = () => {
             const saved = localStorage.getItem('TEKZIVO_API_BASE');
             if (saved) return saved;
-            return window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1'
-                ? 'http://localhost:5000/api'
-                : 'https://karthikeyankasi.pythonanywhere.com/api';
+
+            const hostname = window.location.hostname;
+
+            // 1. Same-origin mode (e.g., hosted together on PythonAnywhere)
+            if (hostname.endsWith('pythonanywhere.com')) {
+                return `${window.location.origin}/api`;
+            }
+
+            // 2. Localhost or Local Network IP
+            if (hostname === 'localhost' || hostname === '127.0.0.1' || hostname.startsWith('192.168.') || hostname.startsWith('10.') || hostname.startsWith('172.')) {
+                return `http://${hostname}:5000/api`;
+            }
+
+            // 3. Separate Frontend Hosting (e.g. Netlify) -> Backend on PythonAnywhere
+            return 'https://karthikeyankasi.pythonanywhere.com/api';
         };
         const API_BASE = getApiBase();
+
+        const getMediaUrl = (path) => {
+            if (!path) return '';
+            if (path.startsWith('http://') || path.startsWith('https://')) return path;
+            const normalized = path.startsWith('/') ? path : '/' + path;
+            const backendBase = API_BASE.endsWith('/api') ? API_BASE.slice(0, -4) : API_BASE;
+            return `${backendBase}${normalized}`;
+        };
+
+        const hidePreloader = () => {
+            const preloader = document.getElementById('app-preloader');
+            if (preloader) {
+                preloader.classList.add('preloader-hidden');
+                setTimeout(() => preloader.remove(), 500);
+            }
+        };
         
         const DEVICE_ISSUES = {
             'Smartphone': {
@@ -454,7 +564,7 @@
                         const mainImg = s.image_path ? s.image_path.split(',')[0] : '';
                         newIssues[s.device_type][s.name] = {
                             price: s.base_price,
-                            icon: mainImg ? `<img src="${mainImg}" alt="${s.name}" class="service-img">` : getServiceIcon(s.device_type, s.name),
+                            icon: mainImg ? `<img src="${getMediaUrl(mainImg)}" alt="${s.name}" class="service-img">` : getServiceIcon(s.device_type, s.name),
                             id: s.id,
                             image_path: s.image_path || '',
                             brand_name: s.brand_name || '',
@@ -541,54 +651,60 @@
         // Load data on start
         (async function() {
             try {
-                const res = await fetch(`${API_BASE}/bootstrap`).then(r => r.json());
-                if (res && res.success && res.data) {
-                    const data = res.data;
-                    
-                    // 1. Apply Settings
-                    if (data.settings) {
-                        activeSettings = data.settings;
-                        applySettingsToUI();
-                    }
-                    
-                    // 2. Load Brands and Models
-                    allBrands = data.brands || [];
-                    allModels = data.models || [];
-                    
-                    // 3. Load Services Catalog
-                    if (data.services && data.services.length > 0) {
-                        const newIssues = {};
-                        data.services.forEach(s => {
-                            if (!newIssues[s.device_type]) {
-                                newIssues[s.device_type] = {};
-                            }
-                            const mainImg = s.image_path ? s.image_path.split(',')[0] : '';
-                            newIssues[s.device_type][s.name] = {
-                                price: s.base_price,
-                                icon: mainImg ? `<img src="${mainImg}" alt="${s.name}" class="service-img">` : getServiceIcon(s.device_type, s.name),
-                                id: s.id,
-                                image_path: s.image_path || '',
-                                brand_name: s.brand_name || '',
-                                color_options: s.color_options || '',
-                                qualities: s.qualities || ''
-                            };
-                        });
-                        for (const key in DEVICE_ISSUES) {
-                            delete DEVICE_ISSUES[key];
+                try {
+                    const res = await fetch(`${API_BASE}/bootstrap`).then(r => r.json());
+                    if (res && res.success && res.data) {
+                        const data = res.data;
+                        
+                        // 1. Apply Settings
+                        if (data.settings) {
+                            activeSettings = data.settings;
+                            applySettingsToUI();
                         }
-                        Object.assign(DEVICE_ISSUES, newIssues);
+                        
+                        // 2. Load Brands and Models
+                        allBrands = data.brands || [];
+                        allModels = data.models || [];
+                        
+                        // 3. Load Services Catalog
+                        if (data.services && data.services.length > 0) {
+                            const newIssues = {};
+                            data.services.forEach(s => {
+                                if (!newIssues[s.device_type]) {
+                                    newIssues[s.device_type] = {};
+                                }
+                                const mainImg = s.image_path ? s.image_path.split(',')[0] : '';
+                                newIssues[s.device_type][s.name] = {
+                                    price: s.base_price,
+                                    icon: mainImg ? `<img src="${getMediaUrl(mainImg)}" alt="${s.name}" class="service-img">` : getServiceIcon(s.device_type, s.name),
+                                    id: s.id,
+                                    image_path: s.image_path || '',
+                                    brand_name: s.brand_name || '',
+                                    color_options: s.color_options || '',
+                                    qualities: s.qualities || ''
+                                };
+                            });
+                            for (const key in DEVICE_ISSUES) {
+                                delete DEVICE_ISSUES[key];
+                            }
+                            Object.assign(DEVICE_ISSUES, newIssues);
+                        }
+                        renderProducts();
+                        return; // Bootstrapped successfully in one call!
                     }
-                    renderProducts();
-                    return; // Bootstrapped successfully in one call!
+                } catch (e) {
+                    console.warn("Fast bootstrap failed, falling back to legacy sequential calls...", e);
                 }
-            } catch (e) {
-                console.warn("Fast bootstrap failed, falling back to legacy sequential calls...", e);
-            }
 
-            // Fallback to sequential individual API calls if bootstrap fails
-            await fetchSettings();
-            await fetchBrandsAndModels();
-            await fetchServices();
+                // Fallback to sequential individual API calls if bootstrap fails
+                await fetchSettings();
+                await fetchBrandsAndModels();
+                await fetchServices();
+            } catch (e) {
+                console.error("Initialization failed completely", e);
+            } finally {
+                hidePreloader();
+            }
         })();
 
         // State for checkout
@@ -666,7 +782,7 @@
                         const mrpPrice = Math.round((data.price * 1.35) / 10) * 10 - 1;
                         card.innerHTML = `
                             <div class="acc-img-wrap" onclick="openProductDetail('${deviceType}', '${issueName.replace(/'/g, "\\'")}', ${data.price}, '${data.id || ''}', '${data.image_path}', event)" title="View Product Details">
-                                ${mainImage ? `<img src="${mainImage}" alt="${issueName}">` : `<span style="font-size:32px;">🎧</span>`}
+                                ${mainImage ? `<img src="${getMediaUrl(mainImage)}" alt="${issueName}">` : `<span style="font-size:32px;">🎧</span>`}
                             </div>
                             <div class="acc-brand">${data.brand_name || 'GENERIC'}</div>
                             <div class="acc-title" onclick="openProductDetail('${deviceType}', '${issueName.replace(/'/g, "\\'")}', ${data.price}, '${data.id || ''}', '${data.image_path}', event)" style="cursor:pointer;" title="View Details">${issueName}</div>
@@ -688,7 +804,7 @@
                         `;
                     } else {
                         card.className = 'product-card';
-                        const displayIcon = mainImage ? `<img src="${mainImage}" alt="${issueName}">` : data.icon;
+                        const displayIcon = mainImage ? `<img src="${getMediaUrl(mainImage)}" alt="${issueName}">` : data.icon;
                         card.innerHTML = `
                             <div class="product-img">
                                 ${displayIcon}
@@ -787,7 +903,7 @@
                             const mrpPrice = Math.round((data.price * 1.35) / 10) * 10 - 1;
                             card.innerHTML = `
                                 <div class="acc-img-wrap" onclick="openProductDetail('${deviceType}', '${issueName.replace(/'/g, "\\'")}', ${data.price}, '${data.id || ''}', '${data.image_path}', event)" title="View Product Details">
-                                    ${mainImage ? `<img src="${mainImage}" alt="${issueName}">` : `<span style="font-size:32px;">🎧</span>`}
+                                    ${mainImage ? `<img src="${getMediaUrl(mainImage)}" alt="${issueName}">` : `<span style="font-size:32px;">🎧</span>`}
                                 </div>
                                 <div class="acc-brand">${data.brand_name || 'GENERIC'}</div>
                                 <div class="acc-title" onclick="openProductDetail('${deviceType}', '${issueName.replace(/'/g, "\\'")}', ${data.price}, '${data.id || ''}', '${data.image_path}', event)" style="cursor:pointer;" title="View Details">${issueName}</div>
@@ -809,7 +925,7 @@
                             `;
                         } else {
                             card.className = 'product-card';
-                            const displayIcon = mainImage ? `<img src="${mainImage}" alt="${issueName}">` : data.icon;
+                            const displayIcon = mainImage ? `<img src="${getMediaUrl(mainImage)}" alt="${issueName}">` : data.icon;
                             card.innerHTML = `
                                 <div class="product-img">
                                     ${displayIcon}
@@ -1126,17 +1242,17 @@
             const imagesList = allImages ? allImages.split(',').map(img => img.trim()).filter(Boolean) : [];
             
             if (imagesList.length > 0) {
-                imgEl.src = imagesList[0];
+                imgEl.src = getMediaUrl(imagesList[0]);
                 imgEl.style.display = 'block';
                 
                 if (imagesList.length > 1) {
                     imagesList.forEach((imgUrl, index) => {
                         const thumb = document.createElement('div');
                         thumb.className = `slideshow-thumb ${index === 0 ? 'active-thumb' : ''}`;
-                        thumb.innerHTML = `<img src="${imgUrl}" alt="Thumbnail ${index + 1}">`;
+                        thumb.innerHTML = `<img src="${getMediaUrl(imgUrl)}" alt="Thumbnail ${index + 1}">`;
                         thumb.onclick = () => {
                             // Swap main image
-                            imgEl.src = imgUrl;
+                            imgEl.src = getMediaUrl(imgUrl);
                             // Set active thumbnail
                             thumbsContainer.querySelectorAll('.slideshow-thumb').forEach(t => t.classList.remove('active-thumb'));
                             thumb.classList.add('active-thumb');

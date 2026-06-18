@@ -1683,21 +1683,133 @@
         padding: 0.75rem 1rem;
       }
     }
+    
+    /* Preloader Styles */
+    .preloader-container {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background-color: var(--bg, #0b0f19);
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      z-index: 999999;
+      opacity: 1;
+      transition: opacity 0.4s ease, visibility 0.4s ease;
+    }
+    .preloader-content {
+      text-align: center;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+    }
+    .preloader-logo {
+      font-family: var(--font-head), sans-serif;
+      font-size: 2.2rem;
+      font-weight: 800;
+      color: var(--text, #ffffff);
+      margin-bottom: 20px;
+      letter-spacing: -0.02em;
+      animation: pulseLogo 2s infinite ease-in-out;
+    }
+    .preloader-logo span {
+      color: var(--primary, #3b82f6);
+    }
+    .preloader-logo em {
+      font-style: normal;
+      color: var(--secondary, #f59e0b);
+    }
+    .preloader-spinner-wrap {
+      position: relative;
+      width: 48px;
+      height: 48px;
+      margin-bottom: 16px;
+    }
+    .preloader-spinner {
+      box-sizing: border-box;
+      width: 100%;
+      height: 100%;
+      border: 3px solid rgba(156, 163, 175, 0.1);
+      border-radius: 50%;
+      border-top-color: var(--primary, #3b82f6);
+      border-right-color: var(--secondary, #f59e0b);
+      animation: spinnerRotate 0.8s linear infinite;
+    }
+    .preloader-text {
+      font-family: var(--font-body), sans-serif;
+      font-size: 0.85rem;
+      color: var(--text-muted, #9ca3af);
+      font-weight: 500;
+    }
+    @keyframes spinnerRotate {
+      to { transform: rotate(360deg); }
+    }
+    @keyframes pulseLogo {
+      0%, 100% { transform: scale(0.98); opacity: 0.95; }
+      50% { transform: scale(1.02); opacity: 1; }
+    }
+    .preloader-hidden {
+      opacity: 0;
+      visibility: hidden;
+      pointer-events: none;
+    }
   </style>
 </head>
 
 <body>
+  <!-- Preloader -->
+  <div id="app-preloader" class="preloader-container">
+    <div class="preloader-content">
+      <div class="preloader-logo">
+        Tek<em>zivo</em> <span style="font-size:0.9rem;font-weight:600;opacity:0.6;">Admin</span>
+      </div>
+      <div class="preloader-spinner-wrap">
+        <div class="preloader-spinner"></div>
+      </div>
+      <div class="preloader-text">Loading control panel...</div>
+    </div>
+  </div>
 
   <!-- API CONFIG — change this to your Flask server URL -->
   <script>
     const getApiBase = () => {
       const saved = localStorage.getItem('TEKZIVO_API_BASE');
       if (saved) return saved;
-      return window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1'
-        ? 'http://localhost:5000/api'
-        : 'https://karthikeyankasi.pythonanywhere.com/api';
+
+      const hostname = window.location.hostname;
+
+      // 1. Same-origin mode (e.g., hosted together on PythonAnywhere)
+      if (hostname.endsWith('pythonanywhere.com')) {
+        return `${window.location.origin}/api`;
+      }
+
+      // 2. Localhost or Local Network IP
+      if (hostname === 'localhost' || hostname === '127.0.0.1' || hostname.startsWith('192.168.') || hostname.startsWith('10.') || hostname.startsWith('172.')) {
+        return `http://${hostname}:5000/api`;
+      }
+
+      // 3. Separate Frontend Hosting (e.g. Netlify) -> Backend on PythonAnywhere
+      return 'https://karthikeyankasi.pythonanywhere.com/api';
     };
     const API_BASE = getApiBase();
+
+    const getMediaUrl = (path) => {
+      if (!path) return '';
+      if (path.startsWith('http://') || path.startsWith('https://')) return path;
+      const normalized = path.startsWith('/') ? path : '/' + path;
+      const backendBase = API_BASE.endsWith('/api') ? API_BASE.slice(0, -4) : API_BASE;
+      return `${backendBase}${normalized}`;
+    };
+
+    const hidePreloader = () => {
+      const preloader = document.getElementById('app-preloader');
+      if (preloader) {
+        preloader.classList.add('preloader-hidden');
+        setTimeout(() => preloader.remove(), 400);
+      }
+    };
 
     if (localStorage.getItem('TEKZIVO_THEME') === 'dark') {
       document.body.classList.add('dark-theme');
@@ -2390,8 +2502,8 @@
           <div>
             <div style="font-size:0.85rem; font-weight:800; color:var(--text); margin-bottom:4px;">Attached Device Photo</div>
             <div style="padding:0.5rem; background:var(--bg); border:1px solid var(--border); border-radius:8px; display:inline-block;">
-              <a href="${b.image_path.startsWith('/') ? b.image_path : '/' + b.image_path}" target="_blank" title="Click to view full image">
-                <img src="${b.image_path.startsWith('/') ? b.image_path : '/' + b.image_path}" style="max-width:100%; max-height:220px; border-radius:6px; display:block;" alt="Device Photo">
+              <a href="${getMediaUrl(b.image_path)}" target="_blank" title="Click to view full image">
+                <img src="${getMediaUrl(b.image_path)}" style="max-width:100%; max-height:220px; border-radius:6px; display:block;" alt="Device Photo">
               </a>
             </div>
           </div>
@@ -2564,8 +2676,8 @@
       <div class="detail-full">
         <div class="detail-label">Attached Device Photo</div>
         <div class="detail-value" style="margin-top:8px;">
-          <a href="${b.image_path.startsWith('/') ? b.image_path : '/' + b.image_path}" target="_blank" title="Click to view full image">
-            <img src="${b.image_path.startsWith('/') ? b.image_path : '/' + b.image_path}" style="max-width:300px; max-height:200px; border-radius:6px; object-fit:cover; display:block; border:1px solid var(--border);" alt="Device Photo">
+          <a href="${getMediaUrl(b.image_path)}" target="_blank" title="Click to view full image">
+            <img src="${getMediaUrl(b.image_path)}" style="max-width:300px; max-height:200px; border-radius:6px; object-fit:cover; display:block; border:1px solid var(--border);" alt="Device Photo">
           </a>
         </div>
       </div>
@@ -3272,7 +3384,7 @@
                     <td>
                       <div style="display:flex; align-items:center; gap:12px;">
                         <div style="position:relative; width:44px; height:44px; border-radius:8px; overflow:hidden; border:1px solid var(--border); background:#f8fafc; display:flex; align-items:center; justify-content:center; flex-shrink:0;" class="acc-img-container">
-                          ${s.image_path ? `<img src="${s.image_path.split(',')[0]}" style="width:100%; height:100%; object-fit:cover;">` : `<span style="font-size:22px;">🎧</span>`}
+                          ${s.image_path ? `<img src="${getMediaUrl(s.image_path.split(',')[0])}" style="width:100%; height:100%; object-fit:cover;">` : `<span style="font-size:22px;">🎧</span>`}
                           <div class="acc-img-overlay" onclick="triggerRowImagesUpload('${s.id}')" style="position:absolute; inset:0; background:rgba(15,23,42,0.6); color:white; opacity:0; display:flex; align-items:center; justify-content:center; font-size:10px; cursor:pointer; font-weight:700; transition:opacity 0.2s; border-radius:8px;">
                             Manage
                           </div>
@@ -3382,7 +3494,7 @@
       newAccessoryImagesList.forEach((path, idx) => {
         container.innerHTML += `
           <div style="position:relative; width:60px; height:60px; border-radius:6px; border:1px solid var(--border); overflow:hidden; background:#f8fafc;">
-            <img src="${path}" style="width:100%; height:100%; object-fit:cover;">
+            <img src="${getMediaUrl(path)}" style="width:100%; height:100%; object-fit:cover;">
             <button type="button" onclick="deleteNewAccessoryImage(${idx})" style="position:absolute; top:2px; right:2px; width:16px; height:16px; border-radius:50%; border:none; background:rgba(239,68,68,0.9); color:white; font-size:10px; cursor:pointer; display:flex; align-items:center; justify-content:center; font-weight:bold;">×</button>
           </div>
         `;
@@ -3507,7 +3619,7 @@
       activeModalProductImages.forEach((path, idx) => {
         grid.innerHTML += `
           <div style="position:relative; aspect-ratio:1; border:1px solid var(--border); border-radius:8px; overflow:hidden; background:#f8fafc;">
-            <img src="${path}" style="width:100%; height:100%; object-fit:cover;">
+            <img src="${getMediaUrl(path)}" style="width:100%; height:100%; object-fit:cover;">
             <button onclick="deleteRowImage('${activeModalProductId}', '${path}')" style="position:absolute; top:4px; right:4px; border:none; background:rgba(239,68,68,0.9); color:white; border-radius:50%; width:20px; height:20px; font-size:12px; cursor:pointer; display:flex; align-items:center; justify-content:center; font-weight:bold;">×</button>
           </div>
         `;
@@ -4226,6 +4338,67 @@
     }
 
     function initRealtimeStream() {
+      const isLocal = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1' || window.location.hostname.startsWith('192.168.') || window.location.hostname.startsWith('10.') || window.location.hostname.startsWith('172.');
+      
+      if (!isLocal) {
+        console.log("Production environment detected. Using short polling (15s) instead of SSE to prevent WSGI process blocking.");
+        
+        const pollForNewBookings = async () => {
+          try {
+            const res = await apiFetch('/bookings?per_page=10');
+            if (res && res.success && res.data && res.data.bookings) {
+              const bookings = res.data.bookings;
+              let foundNew = false;
+              
+              // Process backwards to notify in chronological order
+              for (let i = bookings.length - 1; i >= 0; i--) {
+                const booking = bookings[i];
+                if (!bookingsCache.some(b => b.id === booking.id)) {
+                  // Found a new booking! Add to local cache
+                  bookingsCache.unshift(booking);
+                  foundNew = true;
+                  
+                  // Play notification sound & show toast
+                  const customerName = booking.customer?.name || 'Customer';
+                  const deviceType = booking.service?.device_type || booking.device_type || 'Device';
+                  const issueType = booking.service?.issue_type || booking.issue_type || 'Service';
+                  showToast(`🔔 New booking from ${customerName} for ${deviceType} (${issueType})`);
+                  playNotificationSound();
+                }
+              }
+              
+              if (foundNew) {
+                // Refresh dashboard stats Cache
+                const statsRes = await apiFetch('/dashboard/stats');
+                if (statsRes && statsRes.success) {
+                  statsCache = statsRes.data;
+                  const pb = document.getElementById('pending-badge');
+                  if (pb) pb.textContent = statsCache.totals?.pending || '0';
+                }
+                
+                // Refresh active section
+                if (currentSection === 'dashboard') {
+                  renderDashboardUI(statsCache);
+                } else if (currentSection === 'bookings') {
+                  const tableTbody = document.getElementById('bookings-tbody');
+                  if (tableTbody) {
+                    filterAndRenderTable();
+                  } else {
+                    filterAndRenderKanban();
+                  }
+                }
+              }
+            }
+          } catch (err) {
+            console.warn("Polling error:", err);
+          }
+        };
+        
+        // Poll every 15 seconds
+        setInterval(pollForNewBookings, 15000);
+        return;
+      }
+
       const streamUrl = `${API_BASE}/bookings/stream`;
       console.log("Initializing real-time stream at", streamUrl);
       const eventSource = new EventSource(streamUrl);
@@ -4311,32 +4484,42 @@
         document.body.classList.remove('dark-theme');
       }
 
-      // Try fast bootstrap first
       try {
-        const res = await apiFetch('/admin/bootstrap');
-        if (res && res.success && res.data) {
-          const data = res.data;
-          updateApiStatusBadge('online');
-          
-          techniciansCache = data.technicians || [];
-          statsCache = data.stats || {};
-          bookingsCache = data.bookings || [];
-          
-          const pb = document.getElementById('pending-badge');
-          if (pb) pb.textContent = statsCache.totals?.pending || '0';
-          
-          await renderDashboard(true);
-        } else {
-          throw new Error("Invalid bootstrap data");
+        // Try fast bootstrap first
+        try {
+          const res = await apiFetch('/admin/bootstrap');
+          if (res && res.success && res.data) {
+            const data = res.data;
+            updateApiStatusBadge('online');
+            
+            techniciansCache = data.technicians || [];
+            statsCache = data.stats || {};
+            bookingsCache = data.bookings || [];
+            
+            const pb = document.getElementById('pending-badge');
+            if (pb) pb.textContent = statsCache.totals?.pending || '0';
+            
+            await renderDashboard(true);
+            return;
+          } else {
+            throw new Error("Invalid bootstrap data");
+          }
+        } catch (e) {
+          console.warn("Combined admin bootstrap failed, falling back to legacy sequential fetches...", e);
+          await checkApiHealth();
+          await loadTechniciansCache();
+          await renderDashboard();
         }
       } catch (e) {
-        console.warn("Combined admin bootstrap failed, falling back to legacy sequential fetches...", e);
-        await checkApiHealth();
-        await loadTechniciansCache();
-        await renderDashboard();
+        console.error("Admin initialization failed completely", e);
+      } finally {
+        hidePreloader();
+        try {
+          initRealtimeStream();
+        } catch (err) {
+          console.error("Failed to initialize realtime stream:", err);
+        }
       }
-
-      initRealtimeStream();
 
       // Auto-refresh every 60 seconds (non-blocking)
       setInterval(async () => {

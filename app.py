@@ -351,7 +351,7 @@ Tekzivo System
     # 2. Telegram Alerts
     if settings.get("notify_tg_enable") and settings.get("notify_tg_token") and settings.get("notify_tg_chatid"):
         try:
-            import requests
+            import urllib.request
             token = settings.get("notify_tg_token")
             chat_id = settings.get("notify_tg_chatid")
             
@@ -373,7 +373,15 @@ Tekzivo System
             
             url = f"https://api.telegram.org/bot{token}/sendMessage"
             payload = {"chat_id": chat_id, "text": text, "parse_mode": "Markdown"}
-            requests.post(url, json=payload, timeout=8)
+            data = json.dumps(payload).encode('utf-8')
+            req = urllib.request.Request(
+                url,
+                data=data,
+                headers={'Content-Type': 'application/json'},
+                method='POST'
+            )
+            with urllib.request.urlopen(req, timeout=8) as response:
+                response.read()
             print("[ALERT] Telegram notification sent successfully.")
         except Exception as e:
             print(f"[ALERT_ERROR] Failed to send Telegram alert: {e}")
@@ -398,8 +406,11 @@ def stream_bookings():
         try:
             yield f"data: {json.dumps({'event': 'connected'})}\n\n"
             while True:
-                msg = q.get()
-                yield f"data: {msg}\n\n"
+                try:
+                    msg = q.get(timeout=25)
+                    yield f"data: {msg}\n\n"
+                except queue.Empty:
+                    yield f"data: {json.dumps({'event': 'ping'})}\n\n"
         except GeneratorExit:
             if q in sse_announcers:
                 sse_announcers.remove(q)
