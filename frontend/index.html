@@ -981,6 +981,11 @@
                 submitBtn.classList.remove('checkout-accessory-confirm');
             }
             
+            const photoGroup = document.getElementById('f-upload').closest('.form-group');
+            if (photoGroup) {
+                photoGroup.style.display = isAccessory ? 'none' : 'block';
+            }
+            
             // Change date label
             const dateLabel = document.querySelector('#f-date').previousElementSibling;
             if (dateLabel) {
@@ -1178,6 +1183,8 @@
                 document.getElementById('upload-preview-container').style.display = 'none';
                 document.getElementById('upload-preview-img').src = '';
                 document.getElementById('pincode-msg').innerHTML = '';
+                const photoGroup = document.getElementById('f-upload').closest('.form-group');
+                if (photoGroup) photoGroup.style.display = 'block';
             }, 200);
         }
 

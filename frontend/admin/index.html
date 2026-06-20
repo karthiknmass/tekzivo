@@ -1826,8 +1826,10 @@
     <nav class="sidebar-nav">
       <div class="nav-item active" onclick="loadSection('dashboard',this)"><span
           class="nav-icon">📊</span><span>Dashboard</span></div>
-      <div class="nav-item" onclick="loadSection('bookings',this)"><span
-          class="nav-icon">📋</span><span>Bookings</span><span class="nav-badge" id="pending-badge">—</span></div>
+      <div class="nav-item" onclick="loadSection('service_bookings',this)"><span
+          class="nav-icon">🛠️</span><span>Service Bookings</span><span class="nav-badge" id="service-pending-badge">—</span></div>
+      <div class="nav-item" onclick="loadSection('product_bookings',this)"><span
+          class="nav-icon">📦</span><span>Product Bookings</span><span class="nav-badge" id="product-pending-badge">—</span></div>
       <div class="nav-item" onclick="loadSection('technicians',this)"><span
           class="nav-icon">👨‍🔧</span><span>Technicians</span></div>
       <div class="nav-item" onclick="loadSection('customers',this)"><span
@@ -1943,6 +1945,9 @@
     let statsCache = {};
     let currentPage = 1;
     const PER_PAGE = 15;
+    let serviceBookingsViewMode = localStorage.getItem('TEKZIVO_SERVICE_VIEW') || 'table';
+    let productBookingsViewMode = localStorage.getItem('TEKZIVO_PRODUCT_VIEW') || 'table';
+    let dashboardTableTab = 'service';
 
     const COLORS = ['#1533b8', '#7c3aed', '#0e7490', '#b45309', '#16a34a', '#dc2626', '#1d4ed8', '#d97706'];
     const initials = n => n.split(' ').map(w => w[0]).join('').slice(0, 2).toUpperCase();
@@ -2061,8 +2066,14 @@
 
     <!-- BOOKINGS TABLE -->
     <div class="panel" style="margin-bottom:1.25rem">
-      <div class="panel-header">
-        <div class="panel-title">Recent Bookings</div>
+      <div class="panel-header" style="flex-wrap: wrap; gap: 10px;">
+        <div style="display:flex; align-items:center; gap:16px;">
+          <div class="panel-title">Recent Bookings</div>
+          <div class="settings-tab-bar" style="margin-bottom:0; display:flex; gap:2px; border:1px solid var(--border); padding:2px; border-radius:6px; background:var(--bg);">
+            <button class="settings-tab ${dashboardTableTab === 'service' ? 'active' : ''}" style="padding:6px 12px; font-size:0.8rem; border-radius:4px;" onclick="setDashboardTableTab('service')">🛠️ Services</button>
+            <button class="settings-tab ${dashboardTableTab === 'product' ? 'active' : ''}" style="padding:6px 12px; font-size:0.8rem; border-radius:4px;" onclick="setDashboardTableTab('product')">📦 Products</button>
+          </div>
+        </div>
         <div class="panel-actions">
           <div class="search-box">🔍 <input type="text" placeholder="Search name, ref, phone..." id="search-input" onkeydown="if(event.key === 'Enter') filterAndRenderTable()"/></div>
           <select class="filter-select" id="status-filter" onchange="filterAndRenderTable()">
@@ -2075,7 +2086,7 @@
       </div>
       <div class="table-wrap"><table>
         <thead><tr>
-          <th>Booking Ref</th><th>Customer</th><th>Service</th><th>Device</th>
+          <th>Booking Ref</th><th>Customer</th><th>Service / Product</th><th>Device / Category</th>
           <th>Date / Slot</th><th>Amount</th><th>Status</th><th>Actions</th>
         </tr></thead>
         <tbody id="bookings-tbody">
@@ -2121,11 +2132,27 @@
         // Keep existing cache or use demo data
         if (!bookingsCache.length) bookingsCache = getDemoData();
       }
-      if (currentSection === 'bookings') {
-        filterAndRenderKanban();
-      } else {
+      if (currentSection === 'service_bookings') {
+        filterAndRenderServiceBookings();
+      } else if (currentSection === 'product_bookings') {
+        filterAndRenderProductBookings();
+      } else if (currentSection === 'dashboard') {
         filterAndRenderTable();
       }
+      updatePendingBadges();
+    }
+
+    function setDashboardTableTab(tab) {
+      dashboardTableTab = tab;
+      
+      // Update active tab styles
+      document.querySelectorAll('.panel-header .settings-tab').forEach(btn => btn.classList.remove('active'));
+      const activeBtnIndex = tab === 'service' ? 0 : 1;
+      const btns = document.querySelectorAll('.panel-header .settings-tab');
+      if (btns[activeBtnIndex]) btns[activeBtnIndex].classList.add('active');
+
+      currentPage = 1;
+      filterAndRenderTable();
     }
 
     function filterAndRenderTable() {
@@ -2133,6 +2160,11 @@
       const status = document.getElementById('status-filter')?.value || '';
 
       const filtered = bookingsCache.filter(b => {
+        // filter by category tab
+        const isProduct = (b.service?.device_type || b.device_type || '') === 'Accessories & Gadgets';
+        if (dashboardTableTab === 'service' && isProduct) return false;
+        if (dashboardTableTab === 'product' && !isProduct) return false;
+
         const cname = b.customer?.name || '';
         const cphone = b.customer?.phone || '';
         const ref = b.booking_ref || '';
@@ -2156,7 +2188,7 @@
       }
 
       const pi = document.getElementById('page-info');
-      if (pi) pi.textContent = `Showing ${start + 1}–${Math.min(start + PER_PAGE, total)} of ${total} bookings`;
+      if (pi) pi.textContent = `Showing ${total ? start + 1 : 0}–${Math.min(start + PER_PAGE, total)} of ${total} bookings`;
 
       buildPagination(total);
     }
@@ -2353,6 +2385,372 @@
       `;
     }
 
+    // ─── SERVICE BOOKINGS SECTION ─────────────
+    async function renderServiceBookings() {
+      document.getElementById('page-title').textContent = 'Service Bookings';
+      const content = document.getElementById('main-content');
+      
+      content.innerHTML = `
+        <div class="kanban-container">
+          <div class="kanban-header">
+            <div style="font-family:var(--font-head); font-size:1.1rem; font-weight:800; color:var(--text)">
+              Service Repair Bookings
+            </div>
+            <div style="display:flex; gap:12px; align-items:center; flex-wrap:wrap;">
+              <div class="settings-tab-bar" style="margin-bottom: 0; padding: 2px; border-radius: 6px; border: 1px solid var(--border); background: var(--bg); display: flex; gap: 2px;">
+                <button class="settings-tab ${serviceBookingsViewMode === 'table' ? 'active' : ''}" style="padding: 6px 12px; font-size: 0.8rem; border-radius: 4px;" onclick="setServiceBookingsView('table')">📑 Table</button>
+                <button class="settings-tab ${serviceBookingsViewMode === 'kanban' ? 'active' : ''}" style="padding: 6px 12px; font-size: 0.8rem; border-radius: 4px;" onclick="setServiceBookingsView('kanban')">📋 Board</button>
+              </div>
+              <div class="search-box">🔍 <input type="text" placeholder="Search name, ref, phone..." id="service-search-input" value="" onkeydown="if(event.key === 'Enter') filterAndRenderServiceBookings()"/></div>
+              <select class="filter-select" id="service-status-filter" style="display:${serviceBookingsViewMode === 'table' ? 'block' : 'none'}" onchange="filterAndRenderServiceBookings()">
+                <option value="">All Status</option>
+                <option>Pending</option><option>Confirmed</option>
+                <option>In Progress</option><option>Completed</option><option>Cancelled</option>
+              </select>
+              <button class="btn-refresh" onclick="loadBookings()">↻ <span>Refresh</span></button>
+            </div>
+          </div>
+          
+          <div id="service-bookings-view-container"></div>
+        </div>
+      `;
+
+      filterAndRenderServiceBookings();
+      updateTimestamp();
+    }
+
+    function filterAndRenderServiceBookings() {
+      const search = (document.getElementById('service-search-input')?.value || '').toLowerCase();
+      const statusFilter = document.getElementById('service-status-filter')?.value || '';
+
+      const serviceBookings = bookingsCache.filter(b => {
+        const isService = (b.service?.device_type || b.device_type || '') !== 'Accessories & Gadgets';
+        if (!isService) return false;
+
+        const cname = b.customer?.name || '';
+        const cphone = b.customer?.phone || '';
+        const ref = b.booking_ref || '';
+        const matchSearch = !search || cname.toLowerCase().includes(search) ||
+          cphone.includes(search) || ref.toLowerCase().includes(search);
+        
+        const matchStatus = !statusFilter || b.status === statusFilter;
+        return matchSearch && matchStatus;
+      });
+
+      const container = document.getElementById('service-bookings-view-container');
+      if (!container) return;
+
+      if (serviceBookingsViewMode === 'kanban') {
+        container.innerHTML = `
+          <div class="kanban-board">
+            <div class="kanban-col" id="col-Pending">
+              <div class="kanban-col-header">
+                <div class="kanban-col-title-wrap">
+                  <span class="kanban-col-dot Pending"></span>
+                  <span class="kanban-col-title">Pending</span>
+                </div>
+                <span class="kanban-col-count" id="count-Pending">0</span>
+              </div>
+              <div class="kanban-cards" id="cards-Pending"></div>
+            </div>
+            <div class="kanban-col" id="col-Confirmed">
+              <div class="kanban-col-header">
+                <div class="kanban-col-title-wrap">
+                  <span class="kanban-col-dot Confirmed"></span>
+                  <span class="kanban-col-title">Confirmed</span>
+                </div>
+                <span class="kanban-col-count" id="count-Confirmed">0</span>
+              </div>
+              <div class="kanban-cards" id="cards-Confirmed"></div>
+            </div>
+            <div class="kanban-col" id="col-In-Progress">
+              <div class="kanban-col-header">
+                <div class="kanban-col-title-wrap">
+                  <span class="kanban-col-dot In-Progress"></span>
+                  <span class="kanban-col-title">In Progress</span>
+                </div>
+                <span class="kanban-col-count" id="count-In-Progress">0</span>
+              </div>
+              <div class="kanban-cards" id="cards-In-Progress"></div>
+            </div>
+            <div class="kanban-col" id="col-Completed">
+              <div class="kanban-col-header">
+                <div class="kanban-col-title-wrap">
+                  <span class="kanban-col-dot Completed"></span>
+                  <span class="kanban-col-title">Completed</span>
+                </div>
+                <span class="kanban-col-count" id="count-Completed">0</span>
+              </div>
+              <div class="kanban-cards" id="cards-Completed"></div>
+            </div>
+            <div class="kanban-col" id="col-Cancelled">
+              <div class="kanban-col-header">
+                <div class="kanban-col-title-wrap">
+                  <span class="kanban-col-dot Cancelled"></span>
+                  <span class="kanban-col-title">Cancelled</span>
+                </div>
+                <span class="kanban-col-count" id="count-Cancelled">0</span>
+              </div>
+              <div class="kanban-cards" id="cards-Cancelled"></div>
+            </div>
+          </div>
+        `;
+
+        const columns = {
+          'Pending': document.getElementById('cards-Pending'),
+          'Confirmed': document.getElementById('cards-Confirmed'),
+          'In Progress': document.getElementById('cards-In-Progress'),
+          'Completed': document.getElementById('cards-Completed'),
+          'Cancelled': document.getElementById('cards-Cancelled')
+        };
+        
+        const counts = {
+          'Pending': document.getElementById('count-Pending'),
+          'Confirmed': document.getElementById('count-Confirmed'),
+          'In Progress': document.getElementById('count-In-Progress'),
+          'Completed': document.getElementById('count-Completed'),
+          'Cancelled': document.getElementById('count-Cancelled')
+        };
+
+        const colCounts = { 'Pending': 0, 'Confirmed': 0, 'In Progress': 0, 'Completed': 0, 'Cancelled': 0 };
+
+        serviceBookings.forEach(b => {
+          const statusKey = b.status || 'Pending';
+          const colElement = columns[statusKey];
+          if (colElement) {
+            colElement.innerHTML += kanbanCardHTML(b);
+            colCounts[statusKey]++;
+          }
+        });
+
+        Object.keys(counts).forEach(s => {
+          if (counts[s]) counts[s].textContent = colCounts[s];
+        });
+      } else {
+        const total = serviceBookings.length;
+        const start = (currentPage - 1) * PER_PAGE;
+        const page = serviceBookings.slice(start, start + PER_PAGE);
+
+        container.innerHTML = `
+          <div class="panel" style="margin-top:1.25rem">
+            <div class="table-wrap"><table>
+              <thead><tr>
+                <th>Booking Ref</th><th>Customer</th><th>Service</th><th>Device</th>
+                <th>Date / Slot</th><th>Amount</th><th>Status</th><th>Actions</th>
+              </tr></thead>
+              <tbody id="service-bookings-tbody"></tbody>
+            </table></div>
+            <div class="pagination">
+              <div class="page-info" id="service-page-info"></div>
+              <div class="page-btns" id="service-page-btns"></div>
+            </div>
+          </div>
+        `;
+
+        const tbody = document.getElementById('service-bookings-tbody');
+        if (!page.length) {
+          tbody.innerHTML = `<tr><td colspan="8" style="text-align:center;padding:2rem;color:var(--muted)">No bookings found</td></tr>`;
+        } else {
+          tbody.innerHTML = page.map(b => bookingRow(b)).join('');
+        }
+
+        const pi = document.getElementById('service-page-info');
+        if (pi) pi.textContent = `Showing ${total ? start + 1 : 0}–${Math.min(start + PER_PAGE, total)} of ${total} service bookings`;
+
+        buildPagination(total);
+      }
+    }
+
+    function setServiceBookingsView(mode) {
+      serviceBookingsViewMode = mode;
+      localStorage.setItem('TEKZIVO_SERVICE_VIEW', mode);
+      currentPage = 1;
+      renderServiceBookings();
+    }
+
+    // ─── PRODUCT BOOKINGS SECTION ─────────────
+    async function renderProductBookings() {
+      document.getElementById('page-title').textContent = 'Product Bookings';
+      const content = document.getElementById('main-content');
+      
+      content.innerHTML = `
+        <div class="kanban-container">
+          <div class="kanban-header">
+            <div style="font-family:var(--font-head); font-size:1.1rem; font-weight:800; color:var(--text)">
+              Product Order Bookings
+            </div>
+            <div style="display:flex; gap:12px; align-items:center; flex-wrap:wrap;">
+              <div class="settings-tab-bar" style="margin-bottom: 0; padding: 2px; border-radius: 6px; border: 1px solid var(--border); background: var(--bg); display: flex; gap: 2px;">
+                <button class="settings-tab ${productBookingsViewMode === 'table' ? 'active' : ''}" style="padding: 6px 12px; font-size: 0.8rem; border-radius: 4px;" onclick="setProductBookingsView('table')">📑 Table</button>
+                <button class="settings-tab ${productBookingsViewMode === 'kanban' ? 'active' : ''}" style="padding: 6px 12px; font-size: 0.8rem; border-radius: 4px;" onclick="setProductBookingsView('kanban')">📋 Board</button>
+              </div>
+              <div class="search-box">🔍 <input type="text" placeholder="Search name, ref, phone..." id="product-search-input" value="" onkeydown="if(event.key === 'Enter') filterAndRenderProductBookings()"/></div>
+              <select class="filter-select" id="product-status-filter" style="display:${productBookingsViewMode === 'table' ? 'block' : 'none'}" onchange="filterAndRenderProductBookings()">
+                <option value="">All Status</option>
+                <option>Pending</option><option>Confirmed</option>
+                <option>In Progress</option><option>Completed</option><option>Cancelled</option>
+              </select>
+              <button class="btn-refresh" onclick="loadBookings()">↻ <span>Refresh</span></button>
+            </div>
+          </div>
+          
+          <div id="product-bookings-view-container"></div>
+        </div>
+      `;
+
+      filterAndRenderProductBookings();
+      updateTimestamp();
+    }
+
+    function filterAndRenderProductBookings() {
+      const search = (document.getElementById('product-search-input')?.value || '').toLowerCase();
+      const statusFilter = document.getElementById('product-status-filter')?.value || '';
+
+      const productBookings = bookingsCache.filter(b => {
+        const isProduct = (b.service?.device_type || b.device_type || '') === 'Accessories & Gadgets';
+        if (!isProduct) return false;
+
+        const cname = b.customer?.name || '';
+        const cphone = b.customer?.phone || '';
+        const ref = b.booking_ref || '';
+        const matchSearch = !search || cname.toLowerCase().includes(search) ||
+          cphone.includes(search) || ref.toLowerCase().includes(search);
+        
+        const matchStatus = !statusFilter || b.status === statusFilter;
+        return matchSearch && matchStatus;
+      });
+
+      const container = document.getElementById('product-bookings-view-container');
+      if (!container) return;
+
+      if (productBookingsViewMode === 'kanban') {
+        container.innerHTML = `
+          <div class="kanban-board">
+            <div class="kanban-col" id="col-Pending">
+              <div class="kanban-col-header">
+                <div class="kanban-col-title-wrap">
+                  <span class="kanban-col-dot Pending"></span>
+                  <span class="kanban-col-title">Pending</span>
+                </div>
+                <span class="kanban-col-count" id="count-Pending">0</span>
+              </div>
+              <div class="kanban-cards" id="cards-Pending"></div>
+            </div>
+            <div class="kanban-col" id="col-Confirmed">
+              <div class="kanban-col-header">
+                <div class="kanban-col-title-wrap">
+                  <span class="kanban-col-dot Confirmed"></span>
+                  <span class="kanban-col-title">Confirmed</span>
+                </div>
+                <span class="kanban-col-count" id="count-Confirmed">0</span>
+              </div>
+              <div class="kanban-cards" id="cards-Confirmed"></div>
+            </div>
+            <div class="kanban-col" id="col-In-Progress">
+              <div class="kanban-col-header">
+                <div class="kanban-col-title-wrap">
+                  <span class="kanban-col-dot In-Progress"></span>
+                  <span class="kanban-col-title">In Progress</span>
+                </div>
+                <span class="kanban-col-count" id="count-In-Progress">0</span>
+              </div>
+              <div class="kanban-cards" id="cards-In-Progress"></div>
+            </div>
+            <div class="kanban-col" id="col-Completed">
+              <div class="kanban-col-header">
+                <div class="kanban-col-title-wrap">
+                  <span class="kanban-col-dot Completed"></span>
+                  <span class="kanban-col-title">Completed</span>
+                </div>
+                <span class="kanban-col-count" id="count-Completed">0</span>
+              </div>
+              <div class="kanban-cards" id="cards-Completed"></div>
+            </div>
+            <div class="kanban-col" id="col-Cancelled">
+              <div class="kanban-col-header">
+                <div class="kanban-col-title-wrap">
+                  <span class="kanban-col-dot Cancelled"></span>
+                  <span class="kanban-col-title">Cancelled</span>
+                </div>
+                <span class="kanban-col-count" id="count-Cancelled">0</span>
+              </div>
+              <div class="kanban-cards" id="cards-Cancelled"></div>
+            </div>
+          </div>
+        `;
+
+        const columns = {
+          'Pending': document.getElementById('cards-Pending'),
+          'Confirmed': document.getElementById('cards-Confirmed'),
+          'In Progress': document.getElementById('cards-In-Progress'),
+          'Completed': document.getElementById('cards-Completed'),
+          'Cancelled': document.getElementById('cards-Cancelled')
+        };
+        
+        const counts = {
+          'Pending': document.getElementById('count-Pending'),
+          'Confirmed': document.getElementById('count-Confirmed'),
+          'In Progress': document.getElementById('count-In-Progress'),
+          'Completed': document.getElementById('count-Completed'),
+          'Cancelled': document.getElementById('count-Cancelled')
+        };
+
+        const colCounts = { 'Pending': 0, 'Confirmed': 0, 'In Progress': 0, 'Completed': 0, 'Cancelled': 0 };
+
+        productBookings.forEach(b => {
+          const statusKey = b.status || 'Pending';
+          const colElement = columns[statusKey];
+          if (colElement) {
+            colElement.innerHTML += kanbanCardHTML(b);
+            colCounts[statusKey]++;
+          }
+        });
+
+        Object.keys(counts).forEach(s => {
+          if (counts[s]) counts[s].textContent = colCounts[s];
+        });
+      } else {
+        const total = productBookings.length;
+        const start = (currentPage - 1) * PER_PAGE;
+        const page = productBookings.slice(start, start + PER_PAGE);
+
+        container.innerHTML = `
+          <div class="panel" style="margin-top:1.25rem">
+            <div class="table-wrap"><table>
+              <thead><tr>
+                <th>Booking Ref</th><th>Customer</th><th>Product Name</th><th>Category</th>
+                <th>Delivery Date</th><th>Amount</th><th>Status</th><th>Actions</th>
+              </tr></thead>
+              <tbody id="product-bookings-tbody"></tbody>
+            </table></div>
+            <div class="pagination">
+              <div class="page-info" id="product-page-info"></div>
+              <div class="page-btns" id="product-page-btns"></div>
+            </div>
+          </div>
+        `;
+
+        const tbody = document.getElementById('product-bookings-tbody');
+        if (!page.length) {
+          tbody.innerHTML = `<tr><td colspan="8" style="text-align:center;padding:2rem;color:var(--muted)">No product bookings found</td></tr>`;
+        } else {
+          tbody.innerHTML = page.map(b => bookingRow(b)).join('');
+        }
+
+        const pi = document.getElementById('product-page-info');
+        if (pi) pi.textContent = `Showing ${total ? start + 1 : 0}–${Math.min(start + PER_PAGE, total)} of ${total} product bookings`;
+
+        buildPagination(total);
+      }
+    }
+
+    function setProductBookingsView(mode) {
+      productBookingsViewMode = mode;
+      localStorage.setItem('TEKZIVO_PRODUCT_VIEW', mode);
+      currentPage = 1;
+      renderProductBookings();
+    }
+
     async function assignTechInline(bookingId, techId) {
       if (!techId) return;
       
@@ -2371,7 +2769,7 @@
           bookingsCache[idx].status = 'Confirmed';
         }
         
-        filterAndRenderKanban();
+        refreshActiveView();
         showToast(`✅ Technician "${tech.name}" assigned!`);
       } catch (e) {
         const idx = bookingsCache.findIndex(b => b.id === bookingId);
@@ -2379,7 +2777,7 @@
           bookingsCache[idx].technician = tech;
           bookingsCache[idx].status = 'Confirmed';
         }
-        filterAndRenderKanban();
+        refreshActiveView();
         showToast(`✅ Assigned (local fallback — API offline)`);
       }
     }
@@ -2398,14 +2796,14 @@
           bookingsCache[idx].status = newStatus;
         }
         
-        filterAndRenderKanban();
+        refreshActiveView();
         showToast(`✅ Status updated to "${newStatus}"`);
       } catch {
         const idx = bookingsCache.findIndex(b => b.id === bookingId);
         if (idx !== -1) {
           bookingsCache[idx].status = newStatus;
         }
-        filterAndRenderKanban();
+        refreshActiveView();
         showToast(`✅ Status updated (local fallback — API offline)`);
       }
     }
@@ -2548,7 +2946,7 @@
           }
         }
         
-        filterAndRenderKanban();
+        refreshActiveView();
         showToast(`✅ Booking saved successfully!`);
       } catch {
         const idx = bookingsCache.findIndex(b => b.id === currentDrawerBookingId);
@@ -2560,7 +2958,7 @@
             bookingsCache[idx].technician = null;
           }
         }
-        filterAndRenderKanban();
+        refreshActiveView();
         showToast(`✅ Saved locally (API Offline)`);
       }
       closeBookingDrawer();
@@ -2573,7 +2971,7 @@
         } catch { /* offline */ }
         const idx = bookingsCache.findIndex(b => b.id === id);
         if (idx !== -1) bookingsCache[idx].status = 'Cancelled';
-        filterAndRenderKanban();
+        refreshActiveView();
         showToast('Booking cancelled.');
         closeBookingDrawer();
       });
@@ -2614,10 +3012,20 @@
 
     function buildPagination(total) {
       const pages = Math.ceil(total / PER_PAGE);
-      const pb = document.getElementById('page-btns');
+      let btnContainerId = 'page-btns';
+      if (currentSection === 'service_bookings') {
+        btnContainerId = 'service-page-btns';
+      } else if (currentSection === 'product_bookings') {
+        btnContainerId = 'product-page-btns';
+      }
+      const pb = document.getElementById(btnContainerId);
       if (!pb) return;
+      if (pages <= 1) {
+        pb.innerHTML = '';
+        return;
+      }
       let html = `<button class="page-btn" onclick="goPage(${currentPage - 1})">‹</button>`;
-      for (let i = 1; i <= Math.min(pages, 5); i++) {
+      for (let i = 1; i <= pages; i++) {
         html += `<button class="page-btn ${i === currentPage ? 'active' : ''}" onclick="goPage(${i})">${i}</button>`;
       }
       html += `<button class="page-btn" onclick="goPage(${currentPage + 1})">›</button>`;
@@ -2625,10 +3033,57 @@
     }
 
     function goPage(p) {
-      const total = bookingsCache.length;
-      const max = Math.ceil(total / PER_PAGE);
+      let filteredCount = bookingsCache.length;
+      
+      if (currentSection === 'service_bookings') {
+        const search = (document.getElementById('service-search-input')?.value || '').toLowerCase();
+        const statusFilter = document.getElementById('service-status-filter')?.value || '';
+        filteredCount = bookingsCache.filter(b => {
+          const isService = (b.service?.device_type || b.device_type || '') !== 'Accessories & Gadgets';
+          if (!isService) return false;
+          const cname = b.customer?.name || '';
+          const cphone = b.customer?.phone || '';
+          const ref = b.booking_ref || '';
+          return (!search || cname.toLowerCase().includes(search) || cphone.includes(search) || ref.toLowerCase().includes(search))
+            && (!statusFilter || b.status === statusFilter);
+        }).length;
+      } else if (currentSection === 'product_bookings') {
+        const search = (document.getElementById('product-search-input')?.value || '').toLowerCase();
+        const statusFilter = document.getElementById('product-status-filter')?.value || '';
+        filteredCount = bookingsCache.filter(b => {
+          const isProduct = (b.service?.device_type || b.device_type || '') === 'Accessories & Gadgets';
+          if (!isProduct) return false;
+          const cname = b.customer?.name || '';
+          const cphone = b.customer?.phone || '';
+          const ref = b.booking_ref || '';
+          return (!search || cname.toLowerCase().includes(search) || cphone.includes(search) || ref.toLowerCase().includes(search))
+            && (!statusFilter || b.status === statusFilter);
+        }).length;
+      } else {
+        const search = (document.getElementById('search-input')?.value || '').toLowerCase();
+        const status = document.getElementById('status-filter')?.value || '';
+        filteredCount = bookingsCache.filter(b => {
+          const isProduct = (b.service?.device_type || b.device_type || '') === 'Accessories & Gadgets';
+          if (dashboardTableTab === 'service' && isProduct) return false;
+          if (dashboardTableTab === 'product' && !isProduct) return false;
+          const cname = b.customer?.name || '';
+          const cphone = b.customer?.phone || '';
+          const ref = b.booking_ref || '';
+          return (!search || cname.toLowerCase().includes(search) || cphone.includes(search) || ref.toLowerCase().includes(search))
+            && (!status || b.status === status);
+        }).length;
+      }
+
+      const max = Math.ceil(filteredCount / PER_PAGE);
       currentPage = Math.max(1, Math.min(max, p));
-      filterAndRenderTable();
+      
+      if (currentSection === 'service_bookings') {
+        filterAndRenderServiceBookings();
+      } else if (currentSection === 'product_bookings') {
+        filterAndRenderProductBookings();
+      } else {
+        filterAndRenderTable();
+      }
     }
 
     // ─── MODAL ────────────────────────────────
@@ -2702,13 +3157,13 @@
         // Update cache
         const idx = bookingsCache.findIndex(b => b.id === currentBookingId);
         if (idx !== -1) bookingsCache[idx].status = newStatus;
-        filterAndRenderTable();
+        refreshActiveView();
         showToast(`✅ Status updated to "${newStatus}"`);
       } catch {
         // Update cache locally (offline mode)
         const idx = bookingsCache.findIndex(b => b.id === currentBookingId);
         if (idx !== -1) bookingsCache[idx].status = newStatus;
-        filterAndRenderTable();
+        refreshActiveView();
         showToast(`✅ Status updated (local only — API offline)`);
       }
       closeModal();
@@ -2721,7 +3176,7 @@
         } catch { /* offline */ }
         const idx = bookingsCache.findIndex(b => b.id === id);
         if (idx !== -1) bookingsCache[idx].status = 'Cancelled';
-        filterAndRenderTable();
+        refreshActiveView();
         showToast('Booking cancelled.');
       });
     }
@@ -4158,7 +4613,8 @@
       }
       currentPage = 1;
       if (section === 'dashboard') renderDashboard();
-      if (section === 'bookings') { renderBookingsKanban(); }
+      if (section === 'service_bookings') renderServiceBookings();
+      if (section === 'product_bookings') renderProductBookings();
       if (section === 'technicians') renderTechnicians();
       if (section === 'customers') renderCustomers();
       if (section === 'brands') renderBrands();
@@ -4168,6 +4624,31 @@
     }
 
     function refreshData() { loadSection(currentSection, null); }
+
+    function updatePendingBadges() {
+      const servicePending = bookingsCache.filter(b => b.status === 'Pending' && (b.service?.device_type || b.device_type) !== 'Accessories & Gadgets').length;
+      const productPending = bookingsCache.filter(b => b.status === 'Pending' && (b.service?.device_type || b.device_type) === 'Accessories & Gadgets').length;
+      
+      const spb = document.getElementById('service-pending-badge');
+      const ppb = document.getElementById('product-pending-badge');
+      if (spb) spb.textContent = servicePending || '0';
+      if (ppb) ppb.textContent = productPending || '0';
+    }
+
+    function refreshActiveView() {
+      if (currentSection === 'service_bookings') {
+        filterAndRenderServiceBookings();
+      } else if (currentSection === 'product_bookings') {
+        filterAndRenderProductBookings();
+      } else if (currentSection === 'dashboard') {
+        filterAndRenderTable();
+      } else {
+        if (typeof filterAndRenderKanban === 'function') {
+          filterAndRenderKanban();
+        }
+      }
+      updatePendingBadges();
+    }
 
     // ─── HELPERS ──────────────────────────────
     function skeletonRows(n) {
@@ -4372,21 +4853,13 @@
                 const statsRes = await apiFetch('/dashboard/stats');
                 if (statsRes && statsRes.success) {
                   statsCache = statsRes.data;
-                  const pb = document.getElementById('pending-badge');
-                  if (pb) pb.textContent = statsCache.totals?.pending || '0';
                 }
                 
                 // Refresh active section
                 if (currentSection === 'dashboard') {
                   renderDashboardUI(statsCache);
-                } else if (currentSection === 'bookings') {
-                  const tableTbody = document.getElementById('bookings-tbody');
-                  if (tableTbody) {
-                    filterAndRenderTable();
-                  } else {
-                    filterAndRenderKanban();
-                  }
                 }
+                refreshActiveView();
               }
             }
           } catch (err) {
@@ -4443,21 +4916,13 @@
                 }
               }
               
-              const pb = document.getElementById('pending-badge');
-              if (pb) pb.textContent = statsCache.totals.pending;
             }
 
             // 5. Instantly refresh the current view without calling the API again
             if (currentSection === 'dashboard') {
               renderDashboardUI(statsCache);
-            } else if (currentSection === 'bookings') {
-              const tableTbody = document.getElementById('bookings-tbody');
-              if (tableTbody) {
-                filterAndRenderTable();
-              } else {
-                filterAndRenderKanban();
-              }
             }
+            refreshActiveView();
           }
         } catch (e) {
           console.error("Error processing stream event:", e);
@@ -4496,8 +4961,7 @@
             statsCache = data.stats || {};
             bookingsCache = data.bookings || [];
             
-            const pb = document.getElementById('pending-badge');
-            if (pb) pb.textContent = statsCache.totals?.pending || '0';
+            updatePendingBadges();
             
             await renderDashboard(true);
             return;
@@ -4524,13 +4988,11 @@
       // Auto-refresh every 60 seconds (non-blocking)
       setInterval(async () => {
         const healthy = await checkApiHealth();
-        if (healthy && (currentSection === 'dashboard' || currentSection === 'bookings')) {
+        if (healthy && (currentSection === 'dashboard' || currentSection === 'service_bookings' || currentSection === 'product_bookings')) {
           try {
             const statsRes = await apiFetch('/dashboard/stats');
             if (statsRes.success) {
               statsCache = statsRes.data;
-              const pb = document.getElementById('pending-badge');
-              if (pb) pb.textContent = statsCache.totals?.pending || '0';
             }
           } catch (err) { console.error(err); }
           loadBookings();
