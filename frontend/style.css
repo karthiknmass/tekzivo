@@ -47,6 +47,10 @@
   --transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
+html {
+  height: 100%;
+}
+
 /* Base Styles */
 * {
   margin: 0;
@@ -61,6 +65,9 @@ body {
   line-height: 1.5;
   font-size: 15px;
   -webkit-font-smoothing: antialiased;
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
 }
 
 a {
@@ -305,6 +312,7 @@ a:hover {
   gap: 28px;
   margin-top: 28px;
   margin-bottom: 56px;
+  flex: 1;
 }
 
 /* Sidebar Styling */
@@ -627,7 +635,7 @@ a:hover {
   background: hsl(222, 47%, 8%);
   color: hsl(215, 16%, 70%);
   padding: 50px 0 25px;
-  margin-top: 50px;
+  margin-top: auto;
   border-top: 4px solid var(--primary-light);
 }
 .footer-grid {

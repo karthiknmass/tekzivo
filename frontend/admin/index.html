@@ -204,6 +204,7 @@
       flex: 1;
       display: flex;
       flex-direction: column;
+      min-height: 100vh;
       min-width: 0
     }
 
@@ -268,7 +269,23 @@
 
     .content {
       padding: 1.75rem;
-      flex: 1
+      padding-bottom: 4.5rem;
+      flex: 1;
+    }
+
+    .admin-footer {
+      position: fixed;
+      bottom: 0;
+      left: 240px;
+      right: 0;
+      text-align: center;
+      padding: 1rem 1.75rem;
+      font-size: 0.75rem;
+      color: var(--muted);
+      border-top: 1px solid var(--border);
+      background: var(--white);
+      z-index: 1000;
+      transition: left 0.3s cubic-bezier(0.4, 0, 0.2, 1);
     }
 
     /* STATS */
@@ -1049,6 +1066,10 @@
       .content {
         padding: 1.25rem;
       }
+
+      .admin-footer {
+        left: 0;
+      }
     }
 
     @media(max-width:576px) {
@@ -1560,7 +1581,8 @@
     .dark-theme .topbar,
     .dark-theme .modal,
     .dark-theme .modal-content,
-    .dark-theme .drawer {
+    .dark-theme .drawer,
+    .dark-theme .admin-footer {
       background: #1f2937;
       border-color: #374151;
     }
@@ -1897,6 +1919,10 @@
     <div class="content" id="main-content">
       <div style="text-align:center;padding:4rem;color:var(--muted)">Loading dashboard...</div>
     </div>
+
+    <footer class="admin-footer">
+      &copy; 2026 <span id="admin-footer-biz-name">Tekzivo Electronics Care</span>. All rights reserved.
+    </footer>
   </div>
 
   <!-- MANAGE PRODUCT IMAGES MODAL -->
@@ -4181,6 +4207,13 @@
     let settingsCache = {};
     let serviceAreasCache = [];
 
+    function updateAdminFooterBizName() {
+      const el = document.getElementById('admin-footer-biz-name');
+      if (el && settingsCache && settingsCache.business_name) {
+        el.textContent = settingsCache.business_name;
+      }
+    }
+
     async function renderSettings() {
       document.getElementById('page-title').textContent = 'System Settings';
       const content = document.getElementById('main-content');
@@ -4472,9 +4505,11 @@
         });
         settingsCache = res.data;
         showToast('✅ General settings saved successfully!');
+        updateAdminFooterBizName();
       } catch (err) {
         settingsCache = payload;
         showToast('✅ Saved locally (API Offline)');
+        updateAdminFooterBizName();
       }
     }
 
@@ -5050,6 +5085,16 @@
             
             updatePendingBadges();
             
+            // Load settings in background to update footer copyright
+            apiFetch('/settings')
+              .then(sRes => {
+                if (sRes && sRes.success && sRes.data) {
+                  settingsCache = sRes.data;
+                  updateAdminFooterBizName();
+                }
+              })
+              .catch(err => console.warn("Failed to load settings during init:", err));
+
             await renderDashboard(true);
             hidePreloader();
             initRealtimeStream();
@@ -5062,6 +5107,15 @@
           console.warn("Combined admin bootstrap failed, falling back to legacy sequential fetches...", e);
           await checkApiHealth();
           await loadTechniciansCache();
+          // Load settings in background to update footer copyright
+          apiFetch('/settings')
+            .then(sRes => {
+              if (sRes && sRes.success && sRes.data) {
+                settingsCache = sRes.data;
+                updateAdminFooterBizName();
+              }
+            })
+            .catch(err => console.warn("Failed to load settings during fallback init:", err));
           await renderDashboard();
         }
       } catch (e) {
