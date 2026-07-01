@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Tekzivo - Mobile Spare Parts & Repair Services</title>
-    <link rel="icon" type="image/png" href="logo.png">
+    <link rel="icon" type="image/png" href="logo.png?v=2">
     <link rel="stylesheet" href="style.css">
     <style>
         /* Preloader Styles */
@@ -112,7 +112,7 @@
     <!-- Header -->
     <header class="header-main">
         <div class="container">
-            <a href="#" class="logo" id="logo-brand"><img src="logo.png" alt="Tekzivo Logo" class="logo-img">Tek<span>zivo</span></a>
+            <a href="#" class="logo" id="logo-brand"><img src="logo.png?v=2" alt="Tekzivo Logo" class="logo-img">Tek<span>zivo</span></a>
             
             <div class="search-bar">
                 <input type="text" placeholder="Search for spare parts, repair services, tools..." id="search-input" onkeydown="if(event.key === 'Enter') searchProducts()">
@@ -618,7 +618,7 @@
                 } else {
                     brandHTML = `${activeSettings.business_name}`;
                 }
-                logoBrand.innerHTML = `<img src="logo.png" alt="Tekzivo Logo" class="logo-img">${brandHTML}`;
+                logoBrand.innerHTML = `<img src="logo.png?v=2" alt="Tekzivo Logo" class="logo-img">${brandHTML}`;
             }
 
             // Update top bar contact elements
@@ -1271,7 +1271,7 @@
                     thumbsContainer.style.display = 'none';
                 }
             } else {
-                imgEl.src = 'logo.png';
+                imgEl.src = 'logo.png?v=2';
                 thumbsContainer.style.display = 'none';
             }
             
